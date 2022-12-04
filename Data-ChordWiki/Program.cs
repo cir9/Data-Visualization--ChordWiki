@@ -22,7 +22,7 @@ namespace Data_ChordWiki
             string encodedMusicTitle = url.Split(@"/").Last();
             string musicTitle = HttpUtility.UrlDecode(encodedMusicTitle);
 
-            Console.Write($"{musicTitle}\" ...");
+            Console.Write($"\"{musicTitle}\" ...");
 
 
             string html = editPageUrl + encodedMusicTitle;
@@ -79,13 +79,13 @@ namespace Data_ChordWiki
             for (int i = startIndex; i < nodeCount; i++) {
                 string url = nodes?[i]?.FirstChild?.InnerText ?? "";
 
-                Console.Write($"[#{i,6} / {nodeCount,6}] Fetching \"");
+                Console.Write($"[#{i,6} / {nodeCount,6}] Fetching ");
                 //Console.WriteLine(url);
                 if (!FetchPage(url)) {
                     i--;
-                    Console.WriteLine($"#{i} page fetching failed.");
+                    Console.WriteLine($"Page #{i} fetching failed.");
                     Console.WriteLine();
-                    Console.WriteLine("-- Press Enter to retrieve. --");
+                    Console.WriteLine("-- Press Enter to retry. --");
                     Console.ReadLine();
                 }
                 //Console.ReadLine();
