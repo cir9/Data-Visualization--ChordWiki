@@ -15,3 +15,4 @@ C:\programmings\Data-Visualization--ChordWiki\Data-ChordWiki\obj\Debug\net6.0\Da
 C:\programmings\Data-Visualization--ChordWiki\Data-ChordWiki\obj\Debug\net6.0\ref\Data-ChordWiki.dll
 C:\programmings\Data-Visualization--ChordWiki\Data-ChordWiki\bin\Debug\net6.0\HtmlAgilityPack.dll
 C:\programmings\Data-Visualization--ChordWiki\Data-ChordWiki\obj\Debug\net6.0\Data-ChordWiki.csproj.CopyComplete
+C:\programmings\Data-Visualization--ChordWiki\Data-ChordWiki\bin\Debug\net6.0\CsvHelper.dll

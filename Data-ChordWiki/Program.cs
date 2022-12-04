@@ -3,8 +3,9 @@ using System.Xml;
 using System.Web;
 using System.Net;
 using HtmlAgilityPack;
-
-
+using CsvHelper;
+using System.Globalization;
+using System.Text;
 
 namespace Data_ChordWiki
 {
@@ -14,6 +15,7 @@ namespace Data_ChordWiki
         static readonly string dataPath = new DirectoryInfo(@".\..\..\..\..\data\").FullName;
         static readonly string retrievedFileDir = dataPath + @".\pages\";
         static readonly string editPageUrl = @"https://ja.chordwiki.org/wiki.cgi?c=edit&t=";
+        static readonly string rankingPageUrl = @"https://ja.chordwiki.org/wiki.cgi?c=ranking&m=";
 
 
         static bool FetchPage(string url)
@@ -45,16 +47,8 @@ namespace Data_ChordWiki
 
         }
 
-
-
-
-
-
-
-        static void Main(string[] args)
+        static void FetchPages()
         {
-            Directory.CreateDirectory(dataPath);
-            Directory.CreateDirectory(retrievedFileDir);
 
             Console.WriteLine("datapath = " + dataPath);
             Console.WriteLine();
@@ -91,6 +85,63 @@ namespace Data_ChordWiki
                 //Console.ReadLine();
 
             }
+        }
+
+
+
+        static void FetchRankings()
+        {
+            Console.Write("Month until to fetch: ");
+
+            MonthTime until = new(Console.ReadLine() ?? "");
+
+
+            using var writer = new StreamWriter(dataPath + "ranking.csv", false, Encoding.UTF8);
+            using var csv = new CsvWriter(writer, CultureInfo.InvariantCulture);
+
+            for (MonthTime m = new(1, 2012); m < until; m = m.Next()) {
+                string str = $"{m.year:D4}{m.month:D2}";
+
+                csv.WriteField(str);
+
+                Console.Write($"[{str}] Fetching ranking ...");
+
+                HtmlWeb web = new();
+                HtmlDocument doc = web.Load(rankingPageUrl + str);
+
+                if (web.StatusCode != HttpStatusCode.OK) {
+                    Console.Write(web.StatusCode);
+                }
+
+                var nodes = doc.DocumentNode.SelectNodes("//table[@class=\"ranking\"]/tr/td[3]/a");
+
+                foreach (var node in nodes) {
+                    string url = node.GetAttributeValue("href", "");
+                    Uri uri = new(url);
+                    string encodedMusicTitle = url.Split(@"/").Last();
+                    string musicTitle = HttpUtility.UrlDecode(encodedMusicTitle);
+                    string fileName = Utils.ParseStringToFileName(musicTitle);
+                    csv.WriteField(fileName);
+                }
+
+                csv.NextRecord();
+
+                Console.Write("OK\n");
+            }
+
+
+        }
+
+
+
+
+        static void Main(string[] args)
+        {
+            Directory.CreateDirectory(dataPath);
+            Directory.CreateDirectory(retrievedFileDir);
+
+            if (args[0] == "page") FetchPages();
+            else if (args[0] == "ranking") FetchRankings();
         }
     }
 }
