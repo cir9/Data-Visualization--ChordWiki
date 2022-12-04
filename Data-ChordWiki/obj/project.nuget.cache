@@ -1,8 +1,10 @@
 {
   "version": 2,
-  "dgSpecHash": "IGKbr6ru+JozgYkCls6Joei77zecE5IBBnxIf/rjYpBDvLxt9ei93bBCsiDrRbVhyypPm0sJ6xfFXRgScdquGg==",
+  "dgSpecHash": "h6nRkqIPudyHLAzRm5mwxJGzV0lh2K55K5skFivNXrIXrw7CcbgIjISGrpCg1+XlCWRQLil17ezKAimybnOXEw==",
   "success": true,
   "projectFilePath": "C:\\programmings\\Data-Visualization--ChordWiki\\Data-ChordWiki\\Data-ChordWiki.csproj",
-  "expectedPackageFiles": [],
+  "expectedPackageFiles": [
+    "C:\\Users\\zjy44\\.nuget\\packages\\htmlagilitypack\\1.11.46\\htmlagilitypack.1.11.46.nupkg.sha512"
+  ],
   "logs": []
 }

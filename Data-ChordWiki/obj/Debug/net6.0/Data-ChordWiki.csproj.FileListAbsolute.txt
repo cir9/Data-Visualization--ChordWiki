@@ -13,3 +13,5 @@ C:\programmings\Data-Visualization--ChordWiki\Data-ChordWiki\obj\Debug\net6.0\re
 C:\programmings\Data-Visualization--ChordWiki\Data-ChordWiki\obj\Debug\net6.0\Data-ChordWiki.pdb
 C:\programmings\Data-Visualization--ChordWiki\Data-ChordWiki\obj\Debug\net6.0\Data-ChordWiki.genruntimeconfig.cache
 C:\programmings\Data-Visualization--ChordWiki\Data-ChordWiki\obj\Debug\net6.0\ref\Data-ChordWiki.dll
+C:\programmings\Data-Visualization--ChordWiki\Data-ChordWiki\bin\Debug\net6.0\HtmlAgilityPack.dll
+C:\programmings\Data-Visualization--ChordWiki\Data-ChordWiki\obj\Debug\net6.0\Data-ChordWiki.csproj.CopyComplete
