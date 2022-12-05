@@ -26,9 +26,6 @@ namespace Data_ChordWiki
         static readonly Regex reg_key_subtitle = new Regex(@"{subtitle:(.*?)}", RegexOptions.IgnoreCase);
         static readonly Regex reg_key_c = new Regex(@"{c:(.*?)}", RegexOptions.IgnoreCase);
         static readonly Regex reg_key_block = new Regex(@"{key:(.*?)}", RegexOptions.IgnoreCase);
-        static readonly Regex reg_chord_name = new Regex(
-            @"([Nn]\.?[Cc]\.?)|(\b|\/|[#♯b♭]?[#♯xb♭♮ｷ])([a-gA-G])([#♯b♭]?[#♯xb♭♮ｷ]?)(\+|[Aa][Uu][Gg]|°|[Dd][Ii][Mm]|[ØøΦ∅]|)(\+|[Aa][Uu][Gg]|°|[Dd][Ii][Mm]|[ØøΦ∅]|(?:[m-]|[Mm]in)(?:[MΔ]|[Mm]aj)|[Mm]aj(?:or)?|MAJ(?:OR)?|[Mm]in(?:or)?|MIN(?:OR)?|[Ii]on(?:ian)?|ION(?:IAN)?|[Dd]or(?:ian)?|DOR(?:IAN)?|[Pp]hr(?:y|ygian)?|PHR(?:Y|YGIAN)?|[Ll]yd(?:ian)?|LYD(?:IAN)?|[Mm]ix(?:o|olydian)?|MIX(?:O|OLYDIAN)?|[Aa]eo(?:lian)?|AEO(?:LIAN)?|[Ll]oc(?:rian)?|LOC(?:RIAN)?|[m-]|[MΔ]|)(\+|[Aa][Uu][Gg]|°|[Dd][Ii][Mm]|[ØøΦ∅]|)(sus|)(69|11|13|[796513]|)(sus[#♯b♭+-]?[24]|)(\+|[Aa][Uu][Gg]|°|[Dd][Ii][Mm]|[ØøΦ∅]|)(69|11|13|[79651234]|)(\(?(?:[Aa][Dd][Dd])?(?:(?:[#♯b♭+-]?)(?:11|13|[79651234]))?(?:[\b\/](?:[#♯b♭+-]?)(?:11|13|[79651234]))*\)?)(\/([#♯b♭]?[#♯xb♭♮ｷ]?)([a-gA-G])([#♯b♭]?[#♯xb♭♮ｷ]?)|)(?!\w)"
-        );
 
 
 
