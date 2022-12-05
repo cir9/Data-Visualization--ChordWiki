@@ -12,6 +12,7 @@ namespace Data_ChordWiki
     internal class Program
     {
 
+
         static readonly string dataPath = new DirectoryInfo(@".\..\..\..\..\data\").FullName;
         static readonly string retrievedFileDir = dataPath + @".\pages\";
         static readonly string editPageUrl = @"https://ja.chordwiki.org/wiki.cgi?c=edit&t=";
