@@ -142,6 +142,7 @@ namespace Data_ChordWiki
 
             if (args[0] == "page") FetchPages();
             else if (args[0] == "ranking") FetchRankings();
+            else if (args[0] == "preprocess_ranking") Preprocess.RearrangeRanking(dataPath);
         }
     }
 }
