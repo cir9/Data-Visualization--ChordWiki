@@ -42,12 +42,13 @@ namespace Data_ChordWiki
                 Console.Write($"[#{i,6} / {fileCount,6}] Reading ...");
                 string text = File.ReadAllText(file);
 
-                foreach (Match match in reg_chord_bracket.Matches(text)) {
-                    string chordName = match.Captures[1].Value;
+                foreach (Match match in reg_chord_bracket.Matches(text).Cast<Match>()) {
+                    string chordName = match.Groups[1].Value;
                     int count = 0;
                     chordCounts.TryGetValue(chordName, out count);
                     chordCounts[chordName] = count + 1;
 
+                    ChordNameParse.ParseChordText(chordName);
                 }
 
 

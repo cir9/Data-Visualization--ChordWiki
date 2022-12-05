@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 
@@ -47,6 +48,32 @@ public static class Utils
             fileNameFormat = fileNameFormat[..240];
 
         return fileNameFormat;
+    }
+
+    public static TEnum ToEnum<TEnum>(this string str) where TEnum : struct
+    {
+        return Enum.Parse<TEnum>(str);
+    }
+
+    public static int GetCount(this Regex regex, string text)
+    {
+        return regex.Matches(text).Count;
+    }
+
+
+
+    public static string ToDBC(this string input)
+    {
+        char[] c = input.ToCharArray();
+        for (int i = 0; i < c.Length; i++) {
+            if (c[i] == 12288) {
+                c[i] = (char)32;
+                continue;
+            }
+            if (c[i] > 65280 && c[i] < 65375)
+                c[i] = (char)(c[i] - 65248);
+        }
+        return new string(c);
     }
 
 }
