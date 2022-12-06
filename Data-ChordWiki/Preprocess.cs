@@ -269,7 +269,7 @@ namespace Data_ChordWiki
     public static class Preprocess
     {
 
-        private readonly static int progressionLength = 5;
+        private readonly static int progressionLength = 4;
 
         public static void CalculateStatistics(string dataPath)
         {
@@ -282,16 +282,16 @@ namespace Data_ChordWiki
             using var writer_data = new StreamWriter(dataPath + "/../music_db.csv", false, Encoding.UTF8);
             using (var csv = new CsvWriter(writer_data, CultureInfo.InvariantCulture)) {
 
-                csv.WriteField("FILENAME");
-                csv.WriteField("TITLE");
-                csv.WriteField("SUBTITLE");
-                csv.WriteField("BPM");
-                csv.WriteField("MEASURE");
-                csv.WriteField("KEY");
-                csv.WriteField("POSSIBLE KEYS");
-                csv.WriteField("CHORDS");
-                csv.WriteField("PARA CHORDS");
-                csv.NextRecord();
+                //csv.WriteField("FILENAME");
+                //csv.WriteField("TITLE");
+                //csv.WriteField("SUBTITLE");
+                //csv.WriteField("BPM");
+                //csv.WriteField("MEASURE");
+                //csv.WriteField("KEY");
+                //csv.WriteField("POSSIBLE KEYS");
+                //csv.WriteField("CHORDS");
+                //csv.WriteField("PROGRESSIONS");
+                //csv.NextRecord();
 
                 foreach (string file in files) {
 
@@ -300,7 +300,7 @@ namespace Data_ChordWiki
                     ChordFile chordFile = new(file);
                     if (chordFile.IsKeyUnknown) {
 
-                        Console.Write("Unknown key\n");
+                        Console.Write("Key Unknown\n");
 
                         continue;
                     };
@@ -311,10 +311,12 @@ namespace Data_ChordWiki
                     List<List<Chord>> progressionChords = new();
                     List<List<Chord>> newParaChords = new();
                     foreach (var chord in chords) {
-                        if (chord.isNewParagraph) {
+                        if (chord.IsMark) {
                             newParaChords.Add(new());
+
+                            continue;
                         }
-                        if (chord.IsMark) continue;
+                        //if (chord.IsMark) continue;
 
                         if (chord.IsProgressionChord) {
                             foreach (var list in newParaChords) {

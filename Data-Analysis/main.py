@@ -1,4 +1,5 @@
-import ranking_processing as ranking
+import ranking_process as ranking
+import progression_process as progression
 import os
 
 data_dir = os.path.abspath('./../data/')
@@ -14,6 +15,8 @@ def main(name):
     print(f'Hi, {name}')  # Press Ctrl+F8 to toggle the breakpoint.
     print(os.path.realpath(__file__))
     r = ranking.process_ranking(data_dir)
+    progression.process_progressions(data_dir, r)
+
 
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':

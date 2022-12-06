@@ -511,6 +511,9 @@ namespace Data_ChordWiki
             List<ChordTone> tensions = new();
             tensions.AddRange(result.tensions.Where(e => e == ChordTone.Diminished_5th || e == ChordTone.Augumented_5th));
             result.tensions = tensions;
+            if (result.degree == 7 && tensions.Count == 0 && result.fifthType != FifthType.HalfDiminished)
+                result.degree = 0;
+
             result.omits = new();
             result.adds = new();
             result.isAltered = false;
