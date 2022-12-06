@@ -7,47 +7,154 @@ using System.Threading.Tasks;
 
 namespace Data_ChordWiki
 {
-    public enum Note
-    {
-        Cbb = -14,
-        Dbb = -12,
-        Ebb = -10,
-        Fbb = -9,
-        Gbb = -7,
-        Abb = -5,
-        Bbb = -3,
 
-        Cb = -13,
-        Fb = -8,
+    public struct Note
+    {
+        static readonly Dictionary<int, string> notationFromSemitone = new() {
+            { -3, "bbb" },{ -2, "bb" }, { -1, "b" }, { 0, "" }, { 1, "#" }, { 2, "x" }, { 3, "x#" }
+        };
+        public NoteName name;
+        public int tune;
+
+        public bool IsUnknown { get => name == NoteName.Unknown; }
+
+        public override string ToString()
+        {
+            if (name >= NoteName.I) return $"{notationFromSemitone.GetOrDefault(tune, "")}{name}";
+            return $"{name}{notationFromSemitone.GetOrDefault(tune, "")}";
+        }
+
+        public string ToNumberString()
+        {
+            int scaleNumber = ((int)name) % 7;
+            return $"{notationFromSemitone.GetOrDefault(tune, "")}{scaleNumber + 1}";
+        }
+
+
+        public int GetSemitones()
+        {
+            int scaleNumber = ((int)name) % 7;
+            int offset = scaleNumber >= 3 ? -1 : 0;
+            return scaleNumber * 2 + tune + offset;
+        }
+
+        public static Note FromSemitones(int count)
+        {
+            int scaleNumber = (count % 12 + 1) / 2;
+            Note result = new() {
+                name = (NoteName)scaleNumber
+            };
+            result.tune = (count - result.GetSemitones() + 6) % 12 - 6;
+            return result;
+        }
+
+        public Note ToNearestKey()
+        {
+            Note result = this;
+            while (result.tune <= -2) {
+                int actualScaleNumber = ((int)result.name + 1) % 7;
+                int actualScaleSemitones = (actualScaleNumber >= 3 ? -1 : 0) + actualScaleNumber * 2;
+
+                int tuneOffset = actualScaleSemitones - result.GetSemitones();
+                tuneOffset = (tuneOffset + 126) % 12 - 6;
+
+                result = new() {
+                    name = (NoteName)(actualScaleNumber + 7),
+                    tune = tuneOffset,
+                };
+            }
+
+            while (result.tune >= 2) {
+                int actualScaleNumber = ((int)result.name + 6) % 7;
+                int actualScaleSemitones = (actualScaleNumber >= 3 ? -1 : 0) + actualScaleNumber * 2;
+
+                int tuneOffset = actualScaleSemitones - result.GetSemitones();
+                tuneOffset = (tuneOffset + 126) % 12 - 6;
+
+                result = new() {
+                    name = (NoteName)(actualScaleNumber + 7),
+                    tune = tuneOffset,
+                };
+            }
+
+            return result;
+        }
+
+        public Note ToRelativeKey(Note root)
+        {
+            int scaleOffset = 7 - ((int)root.name) % 7;
+            int actualScaleNumber = ((int)name + scaleOffset) % 7;
+            int actualScaleSemitones =  (actualScaleNumber >= 3 ? -1 : 0) + actualScaleNumber * 2;
+
+            int capo = 12 - root.GetSemitones();
+            Note result = FromSemitones(GetSemitones() + capo);
+            int resultScaleNumber = ((int)result.name) % 7;
+            int resultScaleSemitones = (resultScaleNumber >= 3 ? -1 : 0) + resultScaleNumber * 2;
+
+            int tuneOffset = resultScaleSemitones - actualScaleSemitones;
+            tuneOffset = (tuneOffset + 6) % 12 - 6;
+
+
+            return new Note() {
+                name = (NoteName)(actualScaleNumber + 7),
+                tune = result.tune + tuneOffset,
+            }.ToNearestKey();
+        }
+
+        public static readonly Note Empty = new() { name = NoteName.C, tune = 0 };
+        public static readonly Note Note_A = new() { name = NoteName.A, tune = 0 };
+        public static readonly Note Unknown = new() { name = NoteName.Unknown, tune = 0 };
+        public Note MinorToMajor()
+        {
+            Note result = ToRelativeKey(Note_A);
+            result.name -= 7;
+            return result;
+        }
+
+        public override bool Equals(object? obj)
+        {
+            return obj is Note note &&
+                   name == note.name &&
+                   tune == note.tune;
+        }
+        public override int GetHashCode()
+        {
+            return HashCode.Combine(name, tune);
+        }
+
+        public static bool operator == (Note left, Note right)
+        {
+            return left.name == right.name && left.tune == right.tune;
+        }
+
+        public static bool operator !=(Note left, Note right)
+        {
+            return left.name != right.name || left.tune != right.tune;
+        }
+
+    }
+
+
+
+    public enum NoteName
+    {
+        Unknown = 65536,
 
         C = 0,
-        Db = 1,
-        D = 2,
-        Eb = 3,
-        E = 4,
-        F = 5,
-        Gb = 6,
-        G = 7,
-        Ab = 8,
-        A = 9,
-        Bb = 10,
-        B = 11,
+        D = 1,
+        E = 2,
+        F = 3,
+        G = 4,
+        A = 5,
+        B = 6,
 
-        Cs = 13,
-        Ds = 15,
-        Es = 17,
-        Fs = 18,
-        Gs = 20,
-        As = 22,
-        Bs = 24,
-
-        Cx = 26,
-        Dx = 28,
-        Ex = 30,
-        Fx = 31,
-        Gx = 33,
-        Ax = 35,
-        Bx = 37,
+        I = 7,
+        II = 8,
+        III = 9,
+        IV = 10,
+        V = 11,
+        VI = 12,
+        VII = 13,
     }
 
     public enum ChordTone
@@ -119,6 +226,8 @@ namespace Data_ChordWiki
         public bool isNoChord;
         public bool isOtherChord;
         public bool isAltered;
+        public bool isNewParagraph;
+        public bool isNewLine;
         public List<ChordTone> adds;
         public List<ChordTone> tensions;
         public List<ChordTone> suspends;
@@ -128,9 +237,9 @@ namespace Data_ChordWiki
             { ChordTone.Root, "" }, 
             { ChordTone.Minor_3rd, "m3" },  
             { ChordTone.Major_3rd, "M3" },
-            { ChordTone.Diminished_5th, "b5" },
+            { ChordTone.Diminished_5th, "-5" },
             { ChordTone.Perfect_5th, "5" },
-            { ChordTone.Augumented_5th, "#5" },
+            { ChordTone.Augumented_5th, "+5" },
             { ChordTone.Diminished_7th, "°7" },
             { ChordTone.Minor_7th, "m7" },
             { ChordTone.Major_7th, "M7" },
@@ -170,7 +279,6 @@ namespace Data_ChordWiki
         };
 
 
-        static string NoteToString(Note note) => note.ToString().Replace('s', '#');
 
         public IEnumerable<Note> ToComponents()
         {
@@ -182,13 +290,28 @@ namespace Data_ChordWiki
             return ToStandardSymbol();
         }
 
+        public readonly static ChordName NewParagraph = new() { isNewParagraph = true };
+        public readonly static ChordName NewLine = new() { isNewLine = true };
+
+        public ChordName ToRelativeKey(Note root)
+        {
+            ChordName result = this;
+
+            result.bass = bass.ToRelativeKey(root);
+            result.chordRoot = chordRoot.ToRelativeKey(root);
+
+            return result;
+        }
+
         public string ToStandardSymbol()
         {
+            if (isNewParagraph) return "||";
+            if (isNewLine) return "|";
             if (isNoChord) return "N.C.";
             if (isOtherChord) return "Other";
-            if (isOpenSlashChord) return $"/{NoteToString(bass)}";
+            if (isOpenSlashChord) return $"/{bass.ToNumberString()}";
 
-            string root = NoteToString(chordRoot);
+            string root = chordRoot.ToString();
             string mod = textFromFifthType.GetOrDefault(fifthType, "");
 
             string quality = 
@@ -240,7 +363,7 @@ namespace Data_ChordWiki
 
             string slash = "";
             if (bass != chordRoot) 
-                slash = $"/{NoteToString(bass)}";
+                slash = $"/{bass.ToNumberString()}";
 
             return root + mod + quality + degree + sus + alt + tension + add + omit + slash;
         }
@@ -296,6 +419,7 @@ namespace Data_ChordWiki
         static readonly Regex reg_number = new(@"\d+");
         static readonly Regex reg_tension = new(@"([#♯b♭♮+-])?(\d+)");
 
+
         static readonly Dictionary<int, string> notationFromSemitone = new() {
             { -2, "bb" }, { -1, "b" }, { 0, "" }, { 1, "s" }, { 2, "x" }
         };
@@ -307,7 +431,7 @@ namespace Data_ChordWiki
         private static bool ParseNote(string notationLeft, string name, string notationRight, out Note note)
         {
             if (name.Length == 0) {
-                note = Note.C;
+                note = Note.Empty;
                 return false;
             }
             name = name.ToUpper();
@@ -320,8 +444,11 @@ namespace Data_ChordWiki
 
             int semitones = sharpCount + 2 * doubleSharpCount - flatCount;
 
-            note = $"{name}{notationFromSemitone[semitones]}".ToEnum<Note>();
-
+            note = new Note() {
+                name = name.ToEnum<NoteName>(),
+                tune = semitones,
+            };
+            
             return true;
         }
 

@@ -60,6 +60,13 @@ public static class Utils
     {
         return regex.Matches(text).Count;
     }
+    public static string GetMatchAt(this Regex regex, string text, int index)
+    {
+        var match = regex.Match(text);
+        if (!match.Success) return "";
+
+        return regex.Match(text).Groups[index].Value;
+    }
 
 
     public static V GetOrDefault<K, V>(this Dictionary<K, V> dict, K key, V defalutValue) where K: notnull
