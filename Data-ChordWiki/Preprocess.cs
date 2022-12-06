@@ -105,6 +105,7 @@ namespace Data_ChordWiki
                         chords.Add(ChordName.NewLine);
                 }
 
+
                 foreach (Match match in matches.Cast<Match>()) {
                     string chordName = match.Groups[1].Value;
 
@@ -112,6 +113,19 @@ namespace Data_ChordWiki
 
                     var parsedChords = ChordNameParse.ParseChordText(chordName);
                     parsedChords = parsedChords.Select(e => e.ToRelativeKey(currentKey));
+
+                    //foreach (var chord in parsedChords) {
+                    //    if (chord.isOpenSlashChord && chords.Count > 0) {
+                    //        ChordName lastChord = chords.Last();
+                    //        if (lastChord.IsValidChord) {
+                    //            lastChord.bass = chord.bass ;
+                    //            chords.Add(chord);
+                    //            continue;
+                    //        } 
+                    //    }
+
+                    //    chords.Add(chord);
+                    //}
 
                     chords.AddRange(parsedChords);
                 }

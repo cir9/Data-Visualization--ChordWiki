@@ -48,7 +48,7 @@ namespace Data_ChordWiki
             return result;
         }
 
-        public Note ToNearestKey()
+        public Note ToNearestKey(bool isNumber = false)
         {
             Note result = this;
             int resultSemitones = result.GetSemitones();
@@ -61,7 +61,7 @@ namespace Data_ChordWiki
                 tuneOffset = (tuneOffset + 126) % 12 - 6;
 
                 result = new() {
-                    name = (NoteName)(actualScaleNumber + 7),
+                    name = (NoteName)(actualScaleNumber + (isNumber ? 14 : 7)),
                     tune = tuneOffset,
                 };
             }
@@ -74,7 +74,7 @@ namespace Data_ChordWiki
                 tuneOffset = (tuneOffset + 126) % 12 - 6;
 
                 result = new() {
-                    name = (NoteName)(actualScaleNumber + 7),
+                    name = (NoteName)(actualScaleNumber + (isNumber ? 14 : 7)),
                     tune = tuneOffset,
                 };
             }
@@ -104,7 +104,7 @@ namespace Data_ChordWiki
             return new Note() {
                 name = (NoteName)(actualScaleNumber + (isNumber ? 14 : 7) ),
                 tune = result.tune + tuneOffset,
-            }.ToNearestKey();
+            }.ToNearestKey(isNumber);
         }
 
         public static readonly Note Empty = new() { name = NoteName.C, tune = 0 };
@@ -247,6 +247,8 @@ namespace Data_ChordWiki
         public List<ChordTone> suspends;
         public List<int> omits;
 
+        public bool IsValidChord { get => !(isNoChord || isNewLine || isNewParagraph || isOpenSlashChord); }
+
         static readonly Dictionary<ChordTone, string> textFromChordTone = new() {
             { ChordTone.Root, "" }, 
             { ChordTone.Minor_3rd, "m3" },  
@@ -338,7 +340,7 @@ namespace Data_ChordWiki
 
             string sus = string.Join(string.Empty, suspends.Select(e => textFromChordTone.GetOrDefault(e, "")));
 
-            string alt = isAltered ? "alt." : "";
+            string alt = isAltered ? "alt" : "";
 
 
 
