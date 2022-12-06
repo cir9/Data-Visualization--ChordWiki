@@ -4,7 +4,6 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using Microsoft.VisualBasic;
 
 namespace Data_ChordWiki
 {
@@ -86,9 +85,9 @@ namespace Data_ChordWiki
 
     public enum ChordQuality_37
     {
-        Major = 0,            // M3, M7
-        Minor = 1,            // m3, m7
-        Dominant = 2,         // M3, m7
+        Dominant = 0,         // M3, m7
+        Major = 1,            // M3, M7
+        Minor = 2,            // m3, m7
         MinorMajor = 3,       // m3, M7
         Diminished = 4,       // m3, d7
     }
@@ -114,23 +113,136 @@ namespace Data_ChordWiki
         public Note bass;
         public Note chordRoot;
         public ChordQuality_37 quality;
-        public IntervalType fifthInterval;
+        public FifthType fifthType;
+        public int degree;
         public bool isOpenSlashChord;
         public bool isNoChord;
         public bool isOtherChord;
         public bool isAltered;
+        public List<ChordTone> adds;
         public List<ChordTone> tensions;
         public List<ChordTone> suspends;
         public List<int> omits;
+
+        static readonly Dictionary<ChordTone, string> textFromChordTone = new() {
+            { ChordTone.Root, "" }, 
+            { ChordTone.Minor_3rd, "m3" },  
+            { ChordTone.Major_3rd, "M3" },
+            { ChordTone.Diminished_5th, "b5" },
+            { ChordTone.Perfect_5th, "5" },
+            { ChordTone.Augumented_5th, "#5" },
+            { ChordTone.Diminished_7th, "°7" },
+            { ChordTone.Minor_7th, "m7" },
+            { ChordTone.Major_7th, "M7" },
+            { ChordTone.Octave, "8" },
+            { ChordTone.Flat_9th, "b9" },
+            { ChordTone.Natural_9th, "9" },
+            { ChordTone.Sharp_9th, "#9" },
+            { ChordTone.Flat_11th, "b11" },
+            { ChordTone.Natural_11th, "11" },
+            { ChordTone.Sharp_11th, "#11" },
+            { ChordTone.Flat_13th, "b13" },
+            { ChordTone.Natural_13th, "13" },
+            { ChordTone.Suspended_None, "" },
+            { ChordTone.Suspended_Flat_2nd, "susb2" },
+            { ChordTone.Suspended_Natural_2nd, "sus2" },
+            { ChordTone.Suspended_Sharp_2nd, "sus#2" },
+            { ChordTone.Suspended_Flat_4th, "susb4" },
+            { ChordTone.Suspended_Natural_4th, "sus4" },
+            { ChordTone.Suspended_Sharp_4th, "sus#4" },
+        };
+
+        static readonly Dictionary<FifthType, string> textFromFifthType = new() {
+            { FifthType.None, "" },
+            { FifthType.Diminished, "°" },
+            { FifthType.Augmented, "+" },
+            { FifthType.HalfDiminished, "ø" },
+            {(FifthType)6, "+°" },
+        };
+
+
+        static readonly Dictionary<ChordQuality_37, string> textFromChordQuality = new() {
+            { ChordQuality_37.Dominant, "" },
+            { ChordQuality_37.Minor, "m" },
+            { ChordQuality_37.Major, "M" },
+            { ChordQuality_37.MinorMajor, "mM" },
+            { ChordQuality_37.Diminished, "" }
+        };
+
+
+        static string NoteToString(Note note) => note.ToString().Replace('s', '#');
 
         public IEnumerable<Note> ToComponents()
         {
             throw new NotImplementedException();
         }
 
+        public override string ToString()
+        {
+            return ToStandardSymbol();
+        }
+
         public string ToStandardSymbol()
         {
-            throw new NotImplementedException();
+            if (isNoChord) return "N.C.";
+            if (isOtherChord) return "Other";
+            if (isOpenSlashChord) return $"/{NoteToString(bass)}";
+
+            string root = NoteToString(chordRoot);
+            string mod = textFromFifthType.GetOrDefault(fifthType, "");
+
+            string quality = 
+                ((this.degree < 7 || this.degree == 69) && this.quality == ChordQuality_37.Major)
+                ? "" : textFromChordQuality.GetOrDefault(this.quality, "");
+
+            string degree = (this.degree == 0 || (fifthType == FifthType.HalfDiminished && this.degree == 7))
+                ? "" : this.degree.ToString();
+
+
+            string sus = string.Join(string.Empty, suspends.Select(e => textFromChordTone.GetOrDefault(e, "")));
+
+            string alt = isAltered ? "alt." : "";
+
+
+
+            string[] tensions = this.tensions.Select(e => textFromChordTone.GetOrDefault(e, "")).ToArray();
+            string[] adds = this.adds.Select(e => textFromChordTone.GetOrDefault(e, "")).ToArray();
+
+
+            bool needBracket = false;
+            bool isAlt = false;
+            foreach (var t in tensions) {
+                if (t.Length == 0) continue;
+                char first = t.First();
+                if (first >= '0' && first <= '9') {
+                    needBracket = true;
+                } else {
+                    isAlt = true;
+                }
+            }
+
+            string tension;
+            if (!isAlt && sus.Length == 0 && adds.Length == 0 && tensions.Length == 1 && this.tensions[0] <= ChordTone.Natural_9th)
+                if (this.quality == ChordQuality_37.Minor || degree.Length == 0 || !isAltered)
+                    tension = $"(add{tensions[0]})";
+                else
+                    tension = $"add{tensions[0]}";
+            else if (!needBracket)
+                tension = string.Join(string.Empty, tensions);
+            else
+                tension = $"({string.Join(',', tensions)})";
+
+            string add = adds.Length == 0 ? "" : $"(add{string.Join(',', adds)})";
+
+
+
+            string omit = omits.Count == 0 ? "" : $"(omit{string.Join(',', omits.Select(e => e.ToString()))})";
+
+            string slash = "";
+            if (bass != chordRoot) 
+                slash = $"/{NoteToString(bass)}";
+
+            return root + mod + quality + degree + sus + alt + tension + add + omit + slash;
         }
 
     }
@@ -166,11 +278,11 @@ namespace Data_ChordWiki
         /// Group 22: omit5 / (omit 1,3,5)
         /// </summary>
         static readonly Regex reg_chord_name = new(
-            @"([Nn]\.?[Cc]\.?)|\/([#♯xb♭♮]?[#♯b♭]?|\b)([a-gA-G])([#♯xb♭♮]?[#♯b♭]?)|(\b|[#♯xb♭♮][#♯b♭]?)([a-gA-G])([#♯xb♭♮]?[#♯b♭]?)(\+|[Aa][Uu][Gg]|°|[Dd][Ii][Mm]|[ØøΦ∅]|)([ØøΦ∅]|(?:[m-]|[Mm]in)(?:[MΔ△]|[Mm]aj)|[Mm]aj(?:or)?|MAJ(?:OR)?|[Mm]in(?:or)?|MIN(?:OR)?|[Ii]on(?:ian)?|ION(?:IAN)?|[Dd]or(?:ian)?|DOR(?:IAN)?|[Pp]hr(?:y|ygian)?|PHR(?:Y|YGIAN)?|[Ll]yd(?:ian)?|LYD(?:IAN)?|[Mm]ix(?:o|olydian)?|MIX(?:O|OLYDIAN)?|[Aa]eo(?:lian)?|AEO(?:LIAN)?|[Ll]oc(?:rian)?|LOC(?:RIAN)?|[m-]|[MΔ△]|)(\+|[Aa][Uu][Gg]|°|[Dd][Ii][Mm]|[ØøΦ∅]|)(sus|)(69|11|13|[796513]|)((?:sus[#♯b♭]?[24]?){1,2}|)(\s?\(?omi?t\s?[0-9,]+\)?|)(?:(\+|[Aa][Uu][Gg]|°|[Dd][Ii][Mm]|[ØøΦ∅])\s?(7)?|)(\s?|\s?\(?[Aa]lt(?:ered)?\.?\)?)?(\(?(?:[Aa][Dd][Dd])?(?:(?:[#♯b♭♮+-]?)(?:11|13|69|[79651234]))?(?:(?:[\b\/,.]|\)?\(|[#♯b♭+-]?)[#♯b♭+-]?(?:11|13|[79651234]))*\)?)(?:(?:\/|[Oo][Nn])([#♯b♭]?[#♯xb♭♮]?)([a-gA-G])([#♯xb♭♮]?[#♯b♭]?)|)(\s?\(?omi?t\s?[0-9,]+\)?|)(?!\w)"
+            @"([Nn]\.?[Cc]\.?)|\/([#♯xb♭♮]?[#♯b♭]?|\b)([a-gA-G])([#♯xb♭♮]?[#♯b♭]?)|(\b|[#♯xb♭♮][#♯b♭]?)([a-gA-G])([#♯xb♭♮]?[#♯b♭]?)(\+|[Aa][Uu][Gg]|°|[Dd][Ii][Mm]|[ØøΦ∅]|)([ØøΦ∅]|(?:[m-]|[Mm]in)(?:[MΔ△]|[Mm]aj)|[Mm]aj(?:or)?|MAJ(?:OR)?|[Mm]in(?:or)?|MIN(?:OR)?|[Ii]on(?:ian)?|ION(?:IAN)?|[Dd]or(?:ian)?|DOR(?:IAN)?|[Pp]hr(?:y|ygian)?|PHR(?:Y|YGIAN)?|[Ll]yd(?:ian)?|LYD(?:IAN)?|[Mm]ix(?:o|olydian)?|MIX(?:O|OLYDIAN)?|[Aa]eo(?:lian)?|AEO(?:LIAN)?|[Ll]oc(?:rian)?|LOC(?:RIAN)?|[m-]|[MΔ△]|)(\+|[Aa][Uu][Gg]|°|[Dd][Ii][Mm]|[ØøΦ∅]|)(sus(?!\d)|)(69|11|13|[796513]|)((?:sus[#♯b♭]?[24]?){1,2}|)(\s?\(?omi?t\s?[0-9,\s]+\)?|)(?:(\+(?!\d)|[Aa][Uu][Gg]|°|[Dd][Ii][Mm]|[ØøΦ∅])\s?(7)?|)(\s?|\s?\(?[Aa]lt(?:ered)?\.?\)?)?(\(?(?:[Aa][Dd][Dd])?(?:(?:[#♯b♭♮+-]?)(?:11|13|69|[79651234]))?(?:(?:[\b\/,.]|\)?\(|[#♯b♭+-]?)[#♯b♭+-]?(?:11|13|[79651234]))*\)?)(?:(?:\/|[Oo][Nn])([#♯b♭]?[#♯xb♭♮]?)([a-gA-G])([#♯xb♭♮]?[#♯b♭]?)|)(\s?\(?omi?t\s?[0-9,\s]+\)?|)(?!\w)"
         );
-        static readonly Regex reg_sharp = new(@"[#♯]");
+        static readonly Regex reg_sharp = new(@"[#♯-]");
         static readonly Regex reg_double_sharp = new(@"x");
-        static readonly Regex reg_flat = new(@"[b♭]");
+        static readonly Regex reg_flat = new(@"[b♭+]");
 
         static readonly Regex reg_augmented = new(@"\+|aug", RegexOptions.IgnoreCase);
         static readonly Regex reg_diminished = new(@"°|dim", RegexOptions.IgnoreCase);
@@ -180,6 +292,7 @@ namespace Data_ChordWiki
         static readonly Regex reg_major = new(@"[MΔ△]|[Mm]aj|[Mm]aj(?:or)?|MAJ(?:OR)?|[Ll]yd(?:ian)?|LYD(?:IAN)?|[Ii]on(?:ian)?|ION(?:IAN)?");
         
         static readonly Regex reg_suspended = new(@"sus([#♯b♭])?([24])?", RegexOptions.IgnoreCase);
+        static readonly Regex reg_add = new(@"add((?:[\s,.]?[#♯b♭]?(?:11|13|\d))+)", RegexOptions.IgnoreCase);
         static readonly Regex reg_number = new(@"\d+");
         static readonly Regex reg_tension = new(@"([#♯b♭♮+-])?(\d+)");
 
@@ -241,19 +354,22 @@ namespace Data_ChordWiki
 
         private static IEnumerable<int> ParseOmits(string text)
         {
+            if (text.Length == 0) yield break;
             foreach (Match match in reg_number.Matches(text).Cast<Match>()) {
                 yield return int.Parse(match.Value);
             }
 
         }
 
-        private static IEnumerable<ChordTone> ParseTensions(string text)
+        private static IEnumerable<ChordTone> ParseChordTones(string text)
         {
             foreach (Match match in reg_tension.Matches(text).Cast<Match>()) {
                 var groups = match.Groups;
 
-                string notation = groups[0].Value;
-                int interval = int.Parse(groups[1].Value);
+                string notation = groups[1].Value;
+                int interval = int.Parse(groups[2].Value);
+                if (interval == 0) continue;
+
                 if (interval % 2 == 0) interval += 7;
 
                 int tune = 0;
@@ -263,19 +379,22 @@ namespace Data_ChordWiki
                 int semitones = semitonesFromInterval[interval % 7];
                 ChordTone result = interval < 8 ? ChordTone.Root : ChordTone.Octave;
 
-                yield return result + semitones + tune;
+                result += semitones + tune;
+
+                //if (result == ChordTone.Perfect_5th) {
+                //    continue;
+                //}
+
+                yield return result;
             }
         }
 
 
         public static IEnumerable<ChordName> ParseChordText(string chordText)
         {
-#pragma warning disable CA1416 // 验证平台兼容性
-            chordText = Strings.StrConv(chordText, VbStrConv.Narrow, 0) ?? chordText;
-#pragma warning restore CA1416 // 验证平台兼容性
+            chordText = chordText.ToDBC();
 
             var matches = reg_chord_name.Matches(chordText);
-            List<ChordName> result = new();
 
             foreach (Match match in matches.Cast<Match>()) {
                 var groups = match.Groups;
@@ -283,7 +402,7 @@ namespace Data_ChordWiki
                 string noChord = groups[1].Value;
 
                 if (noChord.Length != 0) {
-                    result.Add(new ChordName() { isNoChord = true });
+                    yield return new ChordName() { isNoChord = true };
                     continue;
                 }
 
@@ -292,7 +411,7 @@ namespace Data_ChordWiki
                 string rootBass_notation_after = groups[4].Value;
 
                 if (ParseNote(rootBass_notation_before, rootBass_name, rootBass_notation_after, out Note bass)) {
-                    result.Add(new ChordName() { bass = bass, isOpenSlashChord = true });
+                    yield return new ChordName() { bass = bass, isOpenSlashChord = true };
                     continue;
                 }
 
@@ -329,8 +448,8 @@ namespace Data_ChordWiki
 
                 string suspended_after = groups[13].Value;
                 foreach (Match mm in reg_suspended.Matches(suspended_after).Cast<Match>()) {
-                    string notation = mm.Groups[0].Value;
-                    string interval = mm.Groups[1].Value;
+                    string notation = mm.Groups[1].Value;
+                    string interval = mm.Groups[2].Value;
 
                     int tune = 0;
                     if (reg_flat.IsMatch(notation)) tune = -1;
@@ -354,49 +473,95 @@ namespace Data_ChordWiki
                 string altered = groups[17].Value;
                 bool isAltered = altered.Length > 0;
 
-                string tensions_text = groups[18].Value;
+                string mod_text = groups[18].Value;
+
+                List<ChordTone> adds = new();
+                foreach (Match mod_match in reg_add.Matches(mod_text).Cast<Match>()) {
+                    string add_text = mod_match.Groups[1].Value;
+                    adds.AddRange(ParseChordTones(add_text));
+                }
+
+                string tensions_text = reg_add.Replace(mod_text, string.Empty);
+
                 List<ChordTone> tensions = new();
-                tensions.AddRange(ParseTensions(tensions_text));
+                tensions.AddRange(ParseChordTones(tensions_text));
 
                 string slashBass_notation_before = groups[19].Value;
                 string slashBass_name = groups[20].Value;
                 string slashBass_notation_after = groups[21].Value;
 
-                Note slashBass;
-                ParseNote(slashBass_notation_before, slashBass_name, slashBass_notation_after, out slashBass);
+                if (!ParseNote(slashBass_notation_before, slashBass_name, slashBass_notation_after, out Note slashBass))
+                    bass = chordRoot;
+                else
+                    bass = slashBass;
 
-                string omit_after = groups[14].Value;
+                string omit_after = groups[22].Value;
                 omits.AddRange(ParseOmits(omit_after));
 
-                IntervalType fifthInterval = IntervalType.Perfect;
-                if ((fifthType & FifthType.Diminished) != 0) {
-                    quality = ChordQuality_37.Diminished;
-                    fifthInterval = IntervalType.Diminished;
+
+                // auto convert Cm7b5 to Cø
+                if (quality == ChordQuality_37.Minor && degree >= 7 && tensions.Remove(ChordTone.Diminished_5th)) {
+                    quality = ChordQuality_37.Dominant;
+                    fifthType |= FifthType.HalfDiminished;
                 }
-                if ((fifthType & FifthType.HalfDiminished) != 0)
-                    fifthInterval = IntervalType.Diminished;
-                if ((fifthType & FifthType.Augmented) != 0)
-                    fifthInterval = IntervalType.Augumented;
+
+                // auto convert Cmb5 to C°
+                if (quality == ChordQuality_37.Minor && degree == 0 && tensions.Remove(ChordTone.Diminished_5th)) {
+                    fifthType |= FifthType.Diminished;
+                }
+
+                if ((fifthType & FifthType.Diminished) != 0)
+                    quality = ChordQuality_37.Diminished;
+
+
+                if (degree == 0 && (tensions.Remove(ChordTone.Natural_13th) || adds.Remove(ChordTone.Natural_13th))) 
+                    degree = 6;
+                if (degree == 6 && (tensions.Remove(ChordTone.Natural_9th) || adds.Remove(ChordTone.Natural_9th))) 
+                    degree = 69;
+
+                //if (tensions.Remove(ChordTone.Natural_9th))
+                //    adds.Add(ChordTone.Natural_9th);
+                //if (tensions.Remove(ChordTone.Natural_11th))
+                //    adds.Add(ChordTone.Natural_11th);
+                //if (tensions.Remove(ChordTone.Natural_13th))
+                //    adds.Add(ChordTone.Natural_13th);
+
+
+                if ((degree < 7 || degree == 69) && quality == ChordQuality_37.MinorMajor)
+                    quality = ChordQuality_37.Minor;
+                if ((degree < 7 || degree == 69) && quality == ChordQuality_37.Dominant)
+                    quality = ChordQuality_37.Major;
+
+
 
                 List<ChordTone> suspends = new();
                 if (sus4 != ChordTone.Suspended_None) suspends.Add(sus4);
                 if (sus2 != ChordTone.Suspended_None) suspends.Add(sus2);
 
-                result.Add(new ChordName() { 
+                //if (sus4 == ChordTone.Suspended_Natural_4th && tensions.Contains(ChordTone.Natural_9th)) {
+
+                //}
+
+                //if (omits.Count == 2 && omits[1] == 5) {
+
+                //}
+
+
+                yield return new ChordName() { 
                     bass = bass,
                     chordRoot = chordRoot,
                     quality = quality,
-                    fifthInterval = fifthInterval,
+                    fifthType = fifthType,
+                    degree = degree,
                     isAltered = isAltered,
+                    adds = adds,
                     tensions = tensions,
                     suspends = suspends,
                     omits = omits,
-                });
-                continue;
+                };
+
             }
 
-
-            throw new NotImplementedException();
 
         }
 

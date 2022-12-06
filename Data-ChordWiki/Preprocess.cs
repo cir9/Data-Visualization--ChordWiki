@@ -39,29 +39,32 @@ namespace Data_ChordWiki
             int i = 0;
             foreach (string file in files) {
 
+                List<ChordName> chords = new();
                 Console.Write($"[#{i,6} / {fileCount,6}] Reading ...");
                 string text = File.ReadAllText(file);
 
                 foreach (Match match in reg_chord_bracket.Matches(text).Cast<Match>()) {
                     string chordName = match.Groups[1].Value;
+
+                    chords.AddRange(ChordNameParse.ParseChordText(chordName));
+                }
+
+                foreach (var chord in chords) {
+                    string chordName = chord.ToStandardSymbol();
                     int count = 0;
                     chordCounts.TryGetValue(chordName, out count);
                     chordCounts[chordName] = count + 1;
-
-                    ChordNameParse.ParseChordText(chordName);
                 }
-
-
                 i++;
 
                 Console.Write("OK\n");
             }
 
 
-            using var writer = new StreamWriter(dataPath + "chord_counts.csv", false, Encoding.UTF8);
+            using var writer = new StreamWriter(dataPath + "/../chord_counts.csv", false, Encoding.UTF8);
             using (var csv = new CsvWriter(writer, CultureInfo.InvariantCulture)) {
 
-                foreach (var kv in chordCounts) {
+                foreach (var kv in chordCounts.OrderBy(e => -e.Value)) {
 
                     csv.WriteField(kv.Key);
                     csv.WriteField(kv.Value);

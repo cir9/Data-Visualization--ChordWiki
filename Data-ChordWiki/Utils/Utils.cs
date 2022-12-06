@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Data_ChordWiki;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
@@ -60,6 +61,14 @@ public static class Utils
         return regex.Matches(text).Count;
     }
 
+
+    public static V GetOrDefault<K, V>(this Dictionary<K, V> dict, K key, V defalutValue) where K: notnull
+    {
+        if (dict.TryGetValue(key, out V? result))
+            return result;
+        return defalutValue;
+
+    }
 
 
     public static string ToDBC(this string input)
