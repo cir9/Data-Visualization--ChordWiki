@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using static System.Formats.Asn1.AsnWriter;
 
 namespace Data_ChordWiki
 {
@@ -13,6 +14,12 @@ namespace Data_ChordWiki
         static readonly Dictionary<int, string> notationFromSemitone = new() {
             { -3, "bbb" },{ -2, "bb" }, { -1, "b" }, { 0, "" }, { 1, "#" }, { 2, "x" }, { 3, "x#" }
         };
+
+        static readonly float[] weightsOfMajorKey = new float[] {
+            10, -1,  2, -2,  6, 6, 0, 2, 0, 2, 0, 10,
+        };
+
+
         public NoteName name;
         public int tune;
 
@@ -31,11 +38,49 @@ namespace Data_ChordWiki
         //}
 
 
+        public static float CalculateKeyScore(Note key, int[] semitoneMap)
+        {
+            int tune = key.GetSemitones() + 12;
+            float score = 0;
+            for (int j = 0; j < 12; j++) {
+                score += weightsOfMajorKey[(tune + j) % 12] * semitoneMap[j];
+            }
+
+            return score;
+        }
+
+
+        public static Note FitKey(int[] semitoneMap, out float maxScore)
+        {
+            float[] scores = new float[12];
+
+            maxScore = float.MinValue;
+            int tune = 0;
+
+            for (int i = 0; i < 12; i++) {
+                float score = 0f;
+                for (int j = 0; j < 12; j++) {
+                    score += weightsOfMajorKey[(i + j) % 12] * semitoneMap[j];
+                }
+                scores[i] = score;
+                if (score > maxScore) {
+                    maxScore = score;
+                    tune = 12 - i;
+                }
+            }
+
+            //Console.WriteLine(tune);
+            //Console.WriteLine(string.Join(',', scores));
+
+            return FromSemitones(tune);
+        }
+
+
         public int GetSemitones()
         {
             int scaleNumber = ((int)name) % 7;
             int offset = scaleNumber >= 3 ? -1 : 0;
-            return scaleNumber * 2 + tune + offset;
+            return (scaleNumber * 2 + tune + offset + 120) % 12;
         }
 
         public static Note FromSemitones(int count)
@@ -106,6 +151,8 @@ namespace Data_ChordWiki
                 tune = result.tune + tuneOffset,
             }.ToNearestKey(isNumber);
         }
+
+
 
         public static readonly Note Empty = new() { name = NoteName.C, tune = 0 };
         public static readonly Note Note_A = new() { name = NoteName.A, tune = 0 };
@@ -229,7 +276,7 @@ namespace Data_ChordWiki
         HalfDiminished = 4,
     }
 
-    public struct ChordName
+    public struct Chord
     {
         public Note bass;
         public Note chordRoot;
@@ -247,7 +294,6 @@ namespace Data_ChordWiki
         public List<ChordTone> suspends;
         public List<int> omits;
 
-        public bool IsValidChord { get => !(isNoChord || isNewLine || isNewParagraph || isOpenSlashChord); }
 
         static readonly Dictionary<ChordTone, string> textFromChordTone = new() {
             { ChordTone.Root, "" }, 
@@ -277,6 +323,21 @@ namespace Data_ChordWiki
             { ChordTone.Suspended_Sharp_4th, "sus#4" },
         };
 
+        static readonly Dictionary<ChordQuality_37, (ChordTone third, ChordTone Seventh)> thirdAndSeventhToneFromChordQuality = new() {
+            { ChordQuality_37.Major, (ChordTone.Major_3rd, ChordTone.Major_7th) },
+            { ChordQuality_37.Minor, (ChordTone.Minor_3rd, ChordTone.Minor_7th) },
+            { ChordQuality_37.MinorMajor, (ChordTone.Minor_3rd, ChordTone.Major_7th) },
+            { ChordQuality_37.Dominant, (ChordTone.Major_3rd, ChordTone.Minor_7th) },
+            { ChordQuality_37.Diminished, (ChordTone.Minor_3rd, ChordTone.Diminished_7th) },
+        };
+
+        static readonly Dictionary<FifthType, ChordTone> fifthToneFromFifthType = new() {
+            { FifthType.None, ChordTone.Perfect_5th },
+            { FifthType.Diminished, ChordTone.Diminished_5th },
+            { FifthType.Augmented, ChordTone.Augumented_5th },
+            { FifthType.HalfDiminished, ChordTone.Diminished_5th },
+        };
+
         static readonly Dictionary<FifthType, string> textFromFifthType = new() {
             { FifthType.None, "" },
             { FifthType.Diminished, "°" },
@@ -296,25 +357,163 @@ namespace Data_ChordWiki
 
 
 
-        public IEnumerable<Note> ToComponents()
+        public bool IsValidChord { get => !(isNoChord || isNewLine || isNewParagraph); }
+        public bool IsMark { get => isNewLine || isNewParagraph; }
+        public bool IsProgressionChord { get => !(isNoChord || isNewLine || isNewParagraph || isOpenSlashChord); }
+
+
+
+
+        public IEnumerable<int> GetComponents()
         {
-            throw new NotImplementedException();
+            if (!IsValidChord) yield break;
+
+
+            if (isOpenSlashChord) {
+                yield return bass.GetSemitones();
+                yield break;
+            }
+
+            ChordTone root = ChordTone.Root;
+
+            (ChordTone third, ChordTone seventh) = thirdAndSeventhToneFromChordQuality.GetOrDefault(
+                quality, (ChordTone.Major_3rd, ChordTone.Minor_7th));
+
+            ChordTone fifth = fifthToneFromFifthType.GetOrDefault(fifthType, ChordTone.Perfect_5th);
+
+            bool hideRoot = false, hideThird = false, hideFifth = false, hideSeventh = false;
+
+            List<ChordTone> notes = new();
+
+            switch (degree) {
+                case 0:
+                    hideSeventh = true;
+                    break;
+                case 1:
+                    hideThird = true;
+                    hideFifth = true;
+                    hideSeventh = true;
+                    break;
+                case 2:
+                    notes.Add(ChordTone.Natural_9th);
+                    hideThird = true;
+                    hideFifth = true;
+                    hideSeventh = true;
+                    break;
+                case 3:
+                    hideFifth = true;
+                    hideSeventh = true;
+                    break;
+                case 4:
+                    notes.Add(ChordTone.Natural_11th);
+                    hideThird = true;
+                    hideFifth = true;
+                    hideSeventh = true;
+                    break;
+                case 5:
+                    hideSeventh = true;
+                    hideThird = true;
+                    break;
+                case 6:
+                    notes.Add(ChordTone.Natural_13th);
+                    hideSeventh = true;
+                    break;
+                case 7:
+                    break;
+                case 9:
+                    notes.Add(ChordTone.Natural_9th);
+                    break;
+                case 11:
+                    notes.Add(ChordTone.Natural_9th);
+                    notes.Add(ChordTone.Natural_11th);
+                    break;
+                case 13:
+                    notes.Add(ChordTone.Natural_9th);
+                    notes.Add(ChordTone.Natural_11th);
+                    notes.Add(ChordTone.Natural_13th);
+                    break;
+                case 69:
+                    notes.Add(ChordTone.Natural_9th);
+                    notes.Add(ChordTone.Natural_13th);
+                    break;
+                default:
+                    hideSeventh = true;
+                    break;
+            }
+
+
+            if (suspends.Count > 0) {
+                hideThird = true;
+                notes.AddRange(suspends);
+            }
+
+            if (tensions.Contains(ChordTone.Diminished_5th))
+                fifth = ChordTone.Diminished_5th;
+            if (tensions.Contains(ChordTone.Augumented_5th))
+                fifth = ChordTone.Augumented_5th;
+
+            if (omits.Contains(1))
+                hideRoot = true;
+            if (omits.Contains(3))
+                hideThird = true;
+            if (omits.Contains(5))
+                hideFifth = true;
+            if (omits.Contains(7))
+                hideSeventh = true;
+
+            if (!hideThird) notes.Add(third);
+            if (!hideFifth) notes.Add(fifth);
+            if (!hideSeventh) notes.Add(seventh);
+
+            notes.AddRange(tensions);
+            notes.Sort();
+
+            int rootSemitomes = chordRoot.GetSemitones();
+
+            if (bass != chordRoot)
+                yield return bass.GetSemitones();
+
+            if (!hideRoot)
+                yield return (rootSemitomes + (int)root) % 12;
+
+            foreach (var note in notes) {
+                yield return (rootSemitomes + (int)note) % 12;
+            }
+
         }
+ 
+
 
         public override string ToString()
         {
             return ToStandardSymbol();
         }
 
-        public readonly static ChordName NewParagraph = new() { isNewParagraph = true };
-        public readonly static ChordName NewLine = new() { isNewLine = true };
+        public readonly static Chord NewParagraph = new() { isNewParagraph = true };
+        public readonly static Chord NewLine = new() { isNewLine = true };
 
-        public ChordName ToRelativeKey(Note root)
+        public Chord ToRelativeKey(Note root)
         {
-            ChordName result = this;
+            Chord result = this;
 
             result.bass = bass.ToRelativeKey(root, true);
             result.chordRoot = chordRoot.ToRelativeKey(root);
+
+            return result;
+        }
+
+        public Chord ToSimpleChord()
+        {
+            Chord result = this;
+            if (result.degree > 7) result.degree = 7;
+            else if (result.degree < 7) result.degree = 0;
+
+            List<ChordTone> tensions = new();
+            tensions.AddRange(result.tensions.Where(e => e == ChordTone.Diminished_5th || e == ChordTone.Augumented_5th));
+            result.tensions = tensions;
+            result.omits = new();
+            result.adds = new();
+            result.isAltered = false;
 
             return result;
         }
@@ -524,6 +723,7 @@ namespace Data_ChordWiki
 
                 result += semitones + tune;
 
+                if (result < 0) continue;
                 //if (result == ChordTone.Perfect_5th) {
                 //    continue;
                 //}
@@ -533,7 +733,7 @@ namespace Data_ChordWiki
         }
 
 
-        public static IEnumerable<ChordName> ParseChordText(string chordText)
+        public static IEnumerable<Chord> ParseChordText(string chordText)
         {
             chordText = chordText.ToDBC();
 
@@ -545,7 +745,7 @@ namespace Data_ChordWiki
                 string noChord = groups[1].Value;
 
                 if (noChord.Length != 0) {
-                    yield return new ChordName() { isNoChord = true };
+                    yield return new Chord() { isNoChord = true };
                     continue;
                 }
 
@@ -554,7 +754,7 @@ namespace Data_ChordWiki
                 string rootBass_notation_after = groups[4].Value;
 
                 if (ParseNote(rootBass_notation_before, rootBass_name, rootBass_notation_after, out Note bass)) {
-                    yield return new ChordName() { bass = bass, isOpenSlashChord = true };
+                    yield return new Chord() { bass = bass, isOpenSlashChord = true };
                     continue;
                 }
 
@@ -690,7 +890,7 @@ namespace Data_ChordWiki
                 //}
 
 
-                yield return new ChordName() { 
+                yield return new Chord() { 
                     bass = bass,
                     chordRoot = chordRoot,
                     quality = quality,

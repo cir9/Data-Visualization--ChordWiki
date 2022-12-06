@@ -10,9 +10,109 @@ using System.Collections.Generic;
 using HtmlAgilityPack;
 using CsvHelper.Configuration.Attributes;
 using System.Text.RegularExpressions;
+using System.Collections;
 
 namespace Data_ChordWiki
 {
+
+
+    public class KeyCalculator
+    {
+
+        public int minimumBatchSize = 16;
+        public List<Chord> batch = new();
+        public int[] semitoneMap = new int[12];
+
+        public float totalScore = 0f;
+        public int totalNotes = 0;
+
+        private int keyNotes = 0;
+
+        private Note _currentKey = Note.Unknown;
+        public readonly Dictionary<Note, int> keyDistribution = new();
+
+        public float AverageScore { get => totalScore / totalNotes; }
+
+
+        public Note CurrentKey {
+            get => _currentKey; 
+            set { 
+                totalScore += Note.CalculateKeyScore(_currentKey, semitoneMap);
+
+                CountKeyNotes();
+
+                semitoneMap = new int[12];
+
+                _currentKey = value;
+            }
+        }
+
+        public void ComputeScoreFor(IEnumerable<Chord> chords)
+        {
+            foreach (var chord in chords) {
+                var comps = chord.GetComponents();
+                foreach (int tune in comps) {
+                    semitoneMap[tune]++;
+                    totalNotes++;
+                    keyNotes++;
+                }
+            }
+        }
+
+        public void EndCalculate()
+        {
+            totalScore += Note.CalculateKeyScore(_currentKey, semitoneMap);
+            CountKeyNotes();
+        }
+
+
+        public void Store(IEnumerable<Chord> chords)
+        {
+            ComputeScoreFor(chords);
+            batch.AddRange(chords);
+        }
+        private void CountKeyNotes()
+        {
+            if (keyNotes == 0) return;
+            if (keyDistribution.TryGetValue(_currentKey, out int count)) {
+                keyDistribution[_currentKey] = count + keyNotes;
+            } else
+                keyDistribution[_currentKey] = keyNotes;
+
+            keyNotes = 0;
+        }
+
+        public IEnumerable<Chord> ForceFlush()
+        {
+            if (batch.Count == 0) return Enumerable.Empty<Chord>();
+
+            _currentKey = Note.FitKey(semitoneMap, out float maxScore);
+            totalScore += maxScore;
+            CountKeyNotes();
+            return Flush();
+        }
+        public IEnumerable<Chord> TryFlush()
+        {
+            if (batch.Count < minimumBatchSize) {
+                return Enumerable.Empty<Chord>();
+            }
+
+            return ForceFlush();
+        }
+
+
+        private IEnumerable<Chord> Flush()
+        {
+            foreach (var chord in batch) {
+                yield return chord.ToRelativeKey(_currentKey);
+            }
+
+
+            batch.Clear();
+            semitoneMap = new int[12];
+        }
+
+    }
 
 
 
@@ -23,7 +123,8 @@ namespace Data_ChordWiki
         static readonly Regex reg_title = new(@"{(?:title|t):(.*?)}", RegexOptions.IgnoreCase);
         static readonly Regex reg_subtitle = new(@"{(?:subtitle|st):(.*?)}", RegexOptions.IgnoreCase);
         static readonly Regex reg_comment = new(@"{(?:ci?|comment(?:_italic)):(.*?)}", RegexOptions.IgnoreCase);
-        static readonly Regex reg_key = new(@"key:\s?([#♯b♭]?)([a-g])([#♯b♭]?)\s?(m(?:in|inor)?|)", RegexOptions.IgnoreCase); static readonly Regex reg_sharp = new(@"[#♯-]");
+        static readonly Regex reg_key = new(@"key:\s?([#♯b♭]?)([a-g])([#♯b♭]?)\s?(m(?:in|inor)?|)", RegexOptions.IgnoreCase); 
+        static readonly Regex reg_sharp = new(@"[#♯-]");
         static readonly Regex reg_flat = new(@"[b♭+]");
 
         static readonly Regex reg_measure = new(@"(\d+\/\d+)");
@@ -35,18 +136,32 @@ namespace Data_ChordWiki
         public float bpm = 0f;
         public string measure = "";
         public Note key = Note.Unknown;
-        public List<ChordName> chords = new();
+        public Dictionary<Note, int> keyDistribution;
+        public List<Chord> chords = new();
+        public float averageScore = 0f;
+        public int totalNotes = 0;
 
         public bool IsKeyUnknown { get => key.IsUnknown; }
+        public Note MostLikelyKey { get => keyDistribution.OrderBy(e => e.Value).First().Key; }
+        public IEnumerable<KeyValuePair<Note, float>> PossibleKeys {
+            get {
+                if (totalNotes == 0) return Enumerable.Empty<KeyValuePair<Note, float>>();
+                return keyDistribution.OrderBy(e => -e.Value)
+                    .Select(e => new KeyValuePair<Note, float>(e.Key, e.Value * 1.0f / totalNotes));
+            }
+        }
 
         public ChordFile(string file)
         {
             string text = File.ReadAllText(file);
 
-            Note currentKey = Note.Unknown;
+            //Note currentKey = Note.Unknown;
 
             string[] lines = text.Split('\n');
             bool isPreviousLineEmpty = true;
+
+
+            KeyCalculator keyCalculator = new ();
 
             foreach (var line in lines) {
 
@@ -79,7 +194,7 @@ namespace Data_ChordWiki
                         string minor = groups[4].Value;
 
                         int sharpCount = reg_sharp.GetCount(notation);
-                        int flatCount = reg_flat.GetCount(notation);
+                        int flatCount = reg_flat.GetCount(notation.ToLower());
                         bool isMinor = minor.Length > 0;
 
                         Note newKey = new() {
@@ -89,50 +204,62 @@ namespace Data_ChordWiki
 
                         if (isMinor) newKey = newKey.MinorToMajor();
 
-                        currentKey = newKey;
-                        if (key.IsUnknown) key = currentKey;
+                        if (key.IsUnknown) key = newKey;
+                        keyCalculator.CurrentKey = newKey;
                     }
 
-
+                    isPreviousLineEmpty = true;
                     continue;
                 }
 
                 var matches = reg_chord_bracket.Matches(line);
                 if (matches.Count != 0) {
-                    if (isPreviousLineEmpty)
-                        chords.Add(ChordName.NewParagraph);
+                    if (key.IsUnknown) break;
+
+                    if (isPreviousLineEmpty) {
+
+                        //var rawChords = keyCalculator.TryFlush(out Note _);
+
+                        chords.AddRange(keyCalculator.TryFlush());
+
+                        chords.Add(Chord.NewParagraph);
+                    }
                     else
-                        chords.Add(ChordName.NewLine);
+                        chords.Add(Chord.NewLine);
                 }
 
+                //if (key.IsUnknown && matches.Count > 0) break;
 
                 foreach (Match match in matches.Cast<Match>()) {
                     string chordName = match.Groups[1].Value;
 
-                    if (currentKey.IsUnknown) return;
-
                     var parsedChords = ChordNameParse.ParseChordText(chordName);
-                    parsedChords = parsedChords.Select(e => e.ToRelativeKey(currentKey));
 
-                    //foreach (var chord in parsedChords) {
-                    //    if (chord.isOpenSlashChord && chords.Count > 0) {
-                    //        ChordName lastChord = chords.Last();
-                    //        if (lastChord.IsValidChord) {
-                    //            lastChord.bass = chord.bass ;
-                    //            chords.Add(chord);
-                    //            continue;
-                    //        } 
-                    //    }
+                    if (key.IsUnknown) {
 
-                    //    chords.Add(chord);
-                    //}
+                        keyCalculator.Store(parsedChords);
+                        //return;
 
-                    chords.AddRange(parsedChords);
+                    } else {
+
+                        parsedChords = parsedChords.Select(e => e.ToRelativeKey(keyCalculator.CurrentKey));
+                        keyCalculator.ComputeScoreFor(parsedChords);
+
+                        chords.AddRange(parsedChords);
+                    }
                 }
+
 
                 isPreviousLineEmpty = matches.Count == 0;
             }
 
+
+            chords.AddRange(keyCalculator.ForceFlush());
+            keyCalculator.EndCalculate();
+
+            totalNotes = keyCalculator.totalNotes;
+            averageScore = keyCalculator.AverageScore;
+            keyDistribution = keyCalculator.keyDistribution;
         }
 
     }
@@ -142,6 +269,7 @@ namespace Data_ChordWiki
     public static class Preprocess
     {
 
+        private readonly static int progressionLength = 5;
 
         public static void CalculateStatistics(string dataPath)
         {
@@ -154,12 +282,15 @@ namespace Data_ChordWiki
             using var writer_data = new StreamWriter(dataPath + "/../music_db.csv", false, Encoding.UTF8);
             using (var csv = new CsvWriter(writer_data, CultureInfo.InvariantCulture)) {
 
+                csv.WriteField("FILENAME");
                 csv.WriteField("TITLE");
                 csv.WriteField("SUBTITLE");
                 csv.WriteField("BPM");
                 csv.WriteField("MEASURE");
                 csv.WriteField("KEY");
+                csv.WriteField("POSSIBLE KEYS");
                 csv.WriteField("CHORDS");
+                csv.WriteField("PARA CHORDS");
                 csv.NextRecord();
 
                 foreach (string file in files) {
@@ -167,34 +298,67 @@ namespace Data_ChordWiki
                     Console.Write($"[#{i,6} / {fileCount,6}] Reading ...");
 
                     ChordFile chordFile = new(file);
-
                     if (chordFile.IsKeyUnknown) {
-                        Console.Write("Key Unknown\n");
+
+                        Console.Write("Unknown key\n");
+
                         continue;
-                    }
+                    };
 
                     var chords = chordFile.chords;
 
+
+                    List<List<Chord>> progressionChords = new();
+                    List<List<Chord>> newParaChords = new();
                     foreach (var chord in chords) {
+                        if (chord.isNewParagraph) {
+                            newParaChords.Add(new());
+                        }
+                        if (chord.IsMark) continue;
+
+                        if (chord.IsProgressionChord) {
+                            foreach (var list in newParaChords) {
+                                list.Add(chord);
+                            }
+                            progressionChords.AddRange(newParaChords.Where(e => e.Count >= progressionLength));
+                            newParaChords.RemoveAll(e => e.Count >= progressionLength);
+                        }
+
                         string chordName = chord.ToStandardSymbol();
                         int count = 0;
                         chordCounts.TryGetValue(chordName, out count);
                         chordCounts[chordName] = count + 1;
                     }
 
+
+                    csv.WriteField(file.Split('\\').Last().Split('.').First());
                     csv.WriteField(chordFile.title);
                     csv.WriteField(chordFile.subtitle);
                     csv.WriteField(chordFile.bpm);
                     csv.WriteField(chordFile.measure);
                     csv.WriteField(chordFile.key);
-                    csv.WriteField(string.Join(' ', chordFile.chords.Select(e=>e.ToString())));
+                    csv.WriteField(string.Join(';', chordFile.PossibleKeys.Select(e => $"{e.Key}:{e.Value}")));
+                    //csv.WriteField(chordFile.averageScore);
+                    csv.WriteField(string.Join(' ', chordFile.chords.Select(e => e.ToString())));
+                    csv.WriteField(
+                        string.Join('|', progressionChords.Select(
+                            e => string.Join(' ', e.Select(
+                                g => g.ToSimpleChord().ToStandardSymbol()
+                            ))
+                        ))
+                    );
+
 
                     csv.NextRecord();
 
 
-                    i++;
 
                     Console.Write("OK\n");
+
+
+
+
+                    i++;
                 }
 
             }
@@ -270,6 +434,9 @@ namespace Data_ChordWiki
             }
 
             Console.Write("OK\n");
+
+
+
 
 
 
