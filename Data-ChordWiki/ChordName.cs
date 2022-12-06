@@ -20,15 +20,15 @@ namespace Data_ChordWiki
 
         public override string ToString()
         {
-            if (name >= NoteName.I) return $"{notationFromSemitone.GetOrDefault(tune, "")}{name}";
-            return $"{name}{notationFromSemitone.GetOrDefault(tune, "")}";
+            if (name >= NoteName.I) return $"{notationFromSemitone.GetOrDefault(tune, "")}{name.ToString().Replace("_", "")}";
+            return $"{name.ToString().Replace("_", "")}{notationFromSemitone.GetOrDefault(tune, "")}";
         }
 
-        public string ToNumberString()
-        {
-            int scaleNumber = ((int)name) % 7;
-            return $"{notationFromSemitone.GetOrDefault(tune, "")}{scaleNumber + 1}";
-        }
+        //public string ToNumberString()
+        //{
+        //    int scaleNumber = ((int)name) % 7;
+        //    return $"{notationFromSemitone.GetOrDefault(tune, "")}{scaleNumber + 1}";
+        //}
 
 
         public int GetSemitones()
@@ -51,11 +51,13 @@ namespace Data_ChordWiki
         public Note ToNearestKey()
         {
             Note result = this;
+            int resultSemitones = result.GetSemitones();
+
             while (result.tune <= -2) {
-                int actualScaleNumber = ((int)result.name + 1) % 7;
+                int actualScaleNumber = ((int)result.name + 6) % 7;
                 int actualScaleSemitones = (actualScaleNumber >= 3 ? -1 : 0) + actualScaleNumber * 2;
 
-                int tuneOffset = actualScaleSemitones - result.GetSemitones();
+                int tuneOffset = resultSemitones - actualScaleSemitones;
                 tuneOffset = (tuneOffset + 126) % 12 - 6;
 
                 result = new() {
@@ -65,10 +67,10 @@ namespace Data_ChordWiki
             }
 
             while (result.tune >= 2) {
-                int actualScaleNumber = ((int)result.name + 6) % 7;
+                int actualScaleNumber = ((int)result.name + 1) % 7;
                 int actualScaleSemitones = (actualScaleNumber >= 3 ? -1 : 0) + actualScaleNumber * 2;
 
-                int tuneOffset = actualScaleSemitones - result.GetSemitones();
+                int tuneOffset = resultSemitones - actualScaleSemitones;
                 tuneOffset = (tuneOffset + 126) % 12 - 6;
 
                 result = new() {
@@ -77,10 +79,14 @@ namespace Data_ChordWiki
                 };
             }
 
+            //if (result.tune <= -3) {
+
+            //}
+
             return result;
         }
 
-        public Note ToRelativeKey(Note root)
+        public Note ToRelativeKey(Note root, bool isNumber = false)
         {
             int scaleOffset = 7 - ((int)root.name) % 7;
             int actualScaleNumber = ((int)name + scaleOffset) % 7;
@@ -96,7 +102,7 @@ namespace Data_ChordWiki
 
 
             return new Note() {
-                name = (NoteName)(actualScaleNumber + 7),
+                name = (NoteName)(actualScaleNumber + (isNumber ? 14 : 7) ),
                 tune = result.tune + tuneOffset,
             }.ToNearestKey();
         }
@@ -124,12 +130,12 @@ namespace Data_ChordWiki
 
         public static bool operator == (Note left, Note right)
         {
-            return left.name == right.name && left.tune == right.tune;
+            return (int)left.name % 7 == (int)right.name % 7 && left.tune == right.tune;
         }
 
         public static bool operator !=(Note left, Note right)
         {
-            return left.name != right.name || left.tune != right.tune;
+            return (int)left.name % 7 != (int)right.name % 7 || left.tune != right.tune;
         }
 
     }
@@ -155,6 +161,14 @@ namespace Data_ChordWiki
         V = 11,
         VI = 12,
         VII = 13,
+
+        _1 = 14,
+        _2 = 15,
+        _3 = 16,
+        _4 = 17,
+        _5 = 18,
+        _6 = 19,
+        _7 = 20,
     }
 
     public enum ChordTone
@@ -297,7 +311,7 @@ namespace Data_ChordWiki
         {
             ChordName result = this;
 
-            result.bass = bass.ToRelativeKey(root);
+            result.bass = bass.ToRelativeKey(root, true);
             result.chordRoot = chordRoot.ToRelativeKey(root);
 
             return result;
@@ -309,7 +323,7 @@ namespace Data_ChordWiki
             if (isNewLine) return "|";
             if (isNoChord) return "N.C.";
             if (isOtherChord) return "Other";
-            if (isOpenSlashChord) return $"/{bass.ToNumberString()}";
+            if (isOpenSlashChord) return $"/{bass}";
 
             string root = chordRoot.ToString();
             string mod = textFromFifthType.GetOrDefault(fifthType, "");
@@ -363,7 +377,7 @@ namespace Data_ChordWiki
 
             string slash = "";
             if (bass != chordRoot) 
-                slash = $"/{bass.ToNumberString()}";
+                slash = $"/{bass}";
 
             return root + mod + quality + degree + sus + alt + tension + add + omit + slash;
         }

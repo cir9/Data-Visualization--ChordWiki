@@ -23,17 +23,17 @@ namespace Data_ChordWiki
         static readonly Regex reg_title = new(@"{(?:title|t):(.*?)}", RegexOptions.IgnoreCase);
         static readonly Regex reg_subtitle = new(@"{(?:subtitle|st):(.*?)}", RegexOptions.IgnoreCase);
         static readonly Regex reg_comment = new(@"{(?:ci?|comment(?:_italic)):(.*?)}", RegexOptions.IgnoreCase);
-        static readonly Regex reg_key = new(@"key:\s?([#♯b♭]?)([a-g])([#♯b♭]?)(m(?:in|inor)?|)", RegexOptions.IgnoreCase); static readonly Regex reg_sharp = new(@"[#♯-]");
+        static readonly Regex reg_key = new(@"key:\s?([#♯b♭]?)([a-g])([#♯b♭]?)\s?(m(?:in|inor)?|)", RegexOptions.IgnoreCase); static readonly Regex reg_sharp = new(@"[#♯-]");
         static readonly Regex reg_flat = new(@"[b♭+]");
 
-        static readonly Regex reg_measure = new(@"\b\d+\/\d+\b");
-        static readonly Regex reg_bpm = new(@"bpm.*?[=≈≒:].*?([\d.]+)", RegexOptions.IgnoreCase);
+        static readonly Regex reg_measure = new(@"(\d+\/\d+)");
+        static readonly Regex reg_bpm = new(@"bpm.??[=≈≒:].??約?([\d.]+)(?!\/)", RegexOptions.IgnoreCase);
 
 
         public string title = "";
         public string subtitle = "";
         public float bpm = 0f;
-        public string measure = "4/4";
+        public string measure = "";
         public Note key = Note.Unknown;
         public List<ChordName> chords = new();
 
@@ -109,6 +109,7 @@ namespace Data_ChordWiki
                     string chordName = match.Groups[1].Value;
 
                     if (currentKey.IsUnknown) return;
+
                     var parsedChords = ChordNameParse.ParseChordText(chordName);
                     parsedChords = parsedChords.Select(e => e.ToRelativeKey(currentKey));
 
@@ -154,7 +155,7 @@ namespace Data_ChordWiki
                     ChordFile chordFile = new(file);
 
                     if (chordFile.IsKeyUnknown) {
-                        Console.Write("Key Unknwon\n");
+                        Console.Write("Key Unknown\n");
                         continue;
                     }
 
