@@ -504,6 +504,8 @@ namespace Data_ChordWiki
 
         public Chord ToSimpleChord()
         {
+            if (!IsProgressionChord) return this;
+
             Chord result = this;
             if (result.degree > 7) result.degree = 7;
             else if (result.degree < 7) result.degree = 0;

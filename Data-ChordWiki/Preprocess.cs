@@ -20,7 +20,7 @@ namespace Data_ChordWiki
     public class KeyCalculator
     {
 
-        public int minimumBatchSize = 16;
+        public int minimumBatchSize = 8;
         public List<Chord> batch = new();
         public int[] semitoneMap = new int[12];
 
@@ -281,6 +281,7 @@ namespace Data_ChordWiki
     {
 
         private readonly static int progressionLength = 4;
+        private readonly static int minSpanLength = 4;
 
         public static void CalculateStatistics(string dataPath)
         {
@@ -327,17 +328,18 @@ namespace Data_ChordWiki
 
                     List<List<string>> progressionChords = new();
                     List<List<string>> newParaChords = new();
-                    int spanCount = 4;
+                    List<string> allSimpleChords = new();
+                    int spanCount = minSpanLength;
                     //string lastChordName = "";
                     foreach (var chord in chords) {
                         if (chord.IsMark) {
                             if (chord.isNewParagraph) {
 
                                 newParaChords.Clear();
-                                spanCount = 4;
+                                spanCount = minSpanLength;
                             }
 
-                            if (spanCount >= 4) {
+                            if (spanCount >= minSpanLength) {
                                 newParaChords.Add(new());
                                 spanCount = 0;
                             }
@@ -347,6 +349,11 @@ namespace Data_ChordWiki
 
                         if (chord.IsProgressionChord) {
                             string simpleChordName = chord.ToSimpleChord().ToStandardSymbol();
+
+                            if (allSimpleChords.Count == 0 || allSimpleChords[^1] != simpleChordName) {
+                                allSimpleChords.Add(simpleChordName);
+                            }
+
                             foreach (var list in newParaChords) {
                                 if (list.Count == 0 || list[^1] != simpleChordName) {
 
@@ -366,12 +373,13 @@ namespace Data_ChordWiki
                     }
 
                     // remove repeat head-tail
-                    progressionChords.RemoveAll(e => e[0] == e[^1]);
+                    // progressionChords.RemoveAll(e => e[0] == e[^1]);
 
                     //foreach (var list in progressionChords) {
                     //    if (list[0] == list[progressionLength - 1])
                     //        list[progressionLength - 1] = list[progressionLength - 2];
                     //}
+
 
 
                     csv.WriteField(file.Split('\\').Last().Split('.').First());
@@ -383,6 +391,8 @@ namespace Data_ChordWiki
                     csv.WriteField(string.Join(';', chordFile.PossibleKeys.Select(e => $"{e.Key}:{e.Value}")));
                     //csv.WriteField(chordFile.averageScore);
                     csv.WriteField(string.Join(' ', chordFile.chords.Select(e => e.ToString())));
+                    csv.WriteField(string.Join(' ', allSimpleChords));
+
                     csv.WriteField(
                         string.Join('|', progressionChords.Select(
                             e => string.Join(' ', e)
