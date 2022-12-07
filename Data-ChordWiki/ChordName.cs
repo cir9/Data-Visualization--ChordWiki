@@ -16,7 +16,7 @@ namespace Data_ChordWiki
         };
 
         static readonly float[] weightsOfMajorKey = new float[] {
-            10, -1,  2, -2,  6, 6, 0, 2, 0, 2, 0, 10,
+           0,-1, 0,-1, 0, 0, -1,0,-1,0,-1,0
         };
 
 
@@ -621,9 +621,9 @@ namespace Data_ChordWiki
         static readonly Regex reg_chord_name = new(
             @"([Nn]\.?[Cc]\.?)|\/([#♯xb♭♮]?[#♯b♭]?|\b)([a-gA-G])([#♯xb♭♮]?[#♯b♭]?)|(\b|[#♯xb♭♮][#♯b♭]?)([a-gA-G])([#♯xb♭♮]?[#♯b♭]?)(\+|[Aa][Uu][Gg]|°|[Dd][Ii][Mm]|[ØøΦ∅]|)([ØøΦ∅]|(?:[m-]|[Mm]in)(?:[MΔ△]|[Mm]aj)|[Mm]aj(?:or)?|MAJ(?:OR)?|[Mm]in(?:or)?|MIN(?:OR)?|[Ii]on(?:ian)?|ION(?:IAN)?|[Dd]or(?:ian)?|DOR(?:IAN)?|[Pp]hr(?:y|ygian)?|PHR(?:Y|YGIAN)?|[Ll]yd(?:ian)?|LYD(?:IAN)?|[Mm]ix(?:o|olydian)?|MIX(?:O|OLYDIAN)?|[Aa]eo(?:lian)?|AEO(?:LIAN)?|[Ll]oc(?:rian)?|LOC(?:RIAN)?|[m-]|[MΔ△]|)(\+|[Aa][Uu][Gg]|°|[Dd][Ii][Mm]|[ØøΦ∅]|)(sus(?!\d)|)(69|11|13|[796513]|)((?:sus[#♯b♭]?[24]?){1,2}|)(\s?\(?omi?t\s?[0-9,\s]+\)?|)(?:(\+(?!\d)|[Aa][Uu][Gg]|°|[Dd][Ii][Mm]|[ØøΦ∅])\s?(7)?|)(\s?|\s?\(?[Aa]lt(?:ered)?\.?\)?)?(\(?(?:[Aa][Dd][Dd])?(?:(?:[#♯b♭♮+-]?)(?:11|13|69|[79651234]))?(?:(?:[\b\/,.]|\)?\(|[#♯b♭+-]?)[#♯b♭+-]?(?:11|13|[79651234]))*\)?)(?:(?:\/|[Oo][Nn])([#♯b♭]?[#♯xb♭♮]?)([a-gA-G])([#♯xb♭♮]?[#♯b♭]?)|)(\s?\(?omi?t\s?[0-9,\s]+\)?|)(?!\w)"
         );
-        static readonly Regex reg_sharp = new(@"[#♯-]");
+        static readonly Regex reg_sharp = new(@"[#♯+]");
         static readonly Regex reg_double_sharp = new(@"x");
-        static readonly Regex reg_flat = new(@"[b♭+]");
+        static readonly Regex reg_flat = new(@"[b♭-]");
 
         static readonly Regex reg_augmented = new(@"\+|aug", RegexOptions.IgnoreCase);
         static readonly Regex reg_diminished = new(@"°|dim", RegexOptions.IgnoreCase);

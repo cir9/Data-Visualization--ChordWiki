@@ -11,6 +11,7 @@ using HtmlAgilityPack;
 using CsvHelper.Configuration.Attributes;
 using System.Text.RegularExpressions;
 using System.Collections;
+using System.Linq;
 
 namespace Data_ChordWiki
 {
@@ -32,7 +33,6 @@ namespace Data_ChordWiki
         public readonly Dictionary<Note, int> keyDistribution = new();
 
         public float AverageScore { get => totalScore / totalNotes; }
-
 
         public Note CurrentKey {
             get => _currentKey; 
@@ -64,6 +64,7 @@ namespace Data_ChordWiki
             totalScore += Note.CalculateKeyScore(_currentKey, semitoneMap);
             CountKeyNotes();
         }
+
 
 
         public void Store(IEnumerable<Chord> chords)
@@ -141,8 +142,11 @@ namespace Data_ChordWiki
         public float averageScore = 0f;
         public int totalNotes = 0;
 
+        public bool ContainsTranspose { get => keyDistribution.Count > 1; }
         public bool IsKeyUnknown { get => key.IsUnknown; }
-        public Note MostLikelyKey { get => keyDistribution.OrderBy(e => e.Value).First().Key; }
+
+        static readonly KeyValuePair<Note, int> defaultKV = new (Note.Unknown, 0);
+        public Note MostLikelyKey { get => keyDistribution.OrderBy(e => e.Value).FirstOrDefault(defaultKV).Key; }
         public IEnumerable<KeyValuePair<Note, float>> PossibleKeys {
             get {
                 if (totalNotes == 0) return Enumerable.Empty<KeyValuePair<Note, float>>();
@@ -214,7 +218,7 @@ namespace Data_ChordWiki
 
                 var matches = reg_chord_bracket.Matches(line);
                 if (matches.Count != 0) {
-                    if (key.IsUnknown) break;
+                    //if (key.IsUnknown) break;
 
                     if (isPreviousLineEmpty) {
 
@@ -222,10 +226,17 @@ namespace Data_ChordWiki
 
                         chords.AddRange(keyCalculator.TryFlush());
 
-                        chords.Add(Chord.NewParagraph);
+                        if (key.IsUnknown)
+                            keyCalculator.Store(new Chord[]{ Chord.NewParagraph});
+                        else
+                            chords.Add(Chord.NewParagraph);
+                    } else { 
+
+                        if (key.IsUnknown)
+                            keyCalculator.Store(new Chord[]{ Chord.NewLine });
+                        else                    
+                            chords.Add(Chord.NewLine);
                     }
-                    else
-                        chords.Add(Chord.NewLine);
                 }
 
                 //if (key.IsUnknown && matches.Count > 0) break;
@@ -299,38 +310,68 @@ namespace Data_ChordWiki
 
                     ChordFile chordFile = new(file);
                     if (chordFile.IsKeyUnknown) {
+                        Note mostLikelyKey = chordFile.MostLikelyKey;
 
-                        Console.Write("Key Unknown\n");
+                        if (chordFile.ContainsTranspose || mostLikelyKey.IsUnknown) {
+                            Console.Write("Key Unknown\n");
+                            continue;
+                        }
 
-                        continue;
+                        Console.Write($"Key Predicted: {mostLikelyKey, -2}, score = {chordFile.averageScore,6:F3} ...");
+
+                        //continue;
                     };
 
                     var chords = chordFile.chords;
 
 
-                    List<List<Chord>> progressionChords = new();
-                    List<List<Chord>> newParaChords = new();
+                    List<List<string>> progressionChords = new();
+                    List<List<string>> newParaChords = new();
+                    int spanCount = 4;
+                    //string lastChordName = "";
                     foreach (var chord in chords) {
                         if (chord.IsMark) {
-                            newParaChords.Add(new());
+                            if (chord.isNewParagraph) {
 
+                                newParaChords.Clear();
+                                spanCount = 4;
+                            }
+
+                            if (spanCount >= 4) {
+                                newParaChords.Add(new());
+                                spanCount = 0;
+                            }
                             continue;
                         }
                         //if (chord.IsMark) continue;
 
                         if (chord.IsProgressionChord) {
+                            string simpleChordName = chord.ToSimpleChord().ToStandardSymbol();
                             foreach (var list in newParaChords) {
-                                list.Add(chord);
+                                if (list.Count == 0 || list[^1] != simpleChordName) {
+
+                                    list.Add(simpleChordName);
+                                }
                             }
                             progressionChords.AddRange(newParaChords.Where(e => e.Count >= progressionLength));
                             newParaChords.RemoveAll(e => e.Count >= progressionLength);
+                            spanCount++;
                         }
+
 
                         string chordName = chord.ToStandardSymbol();
                         int count = 0;
                         chordCounts.TryGetValue(chordName, out count);
                         chordCounts[chordName] = count + 1;
                     }
+
+                    // remove repeat head-tail
+                    progressionChords.RemoveAll(e => e[0] == e[^1]);
+
+                    //foreach (var list in progressionChords) {
+                    //    if (list[0] == list[progressionLength - 1])
+                    //        list[progressionLength - 1] = list[progressionLength - 2];
+                    //}
 
 
                     csv.WriteField(file.Split('\\').Last().Split('.').First());
@@ -344,9 +385,7 @@ namespace Data_ChordWiki
                     csv.WriteField(string.Join(' ', chordFile.chords.Select(e => e.ToString())));
                     csv.WriteField(
                         string.Join('|', progressionChords.Select(
-                            e => string.Join(' ', e.Select(
-                                g => g.ToSimpleChord().ToStandardSymbol()
-                            ))
+                            e => string.Join(' ', e)
                         ))
                     );
 

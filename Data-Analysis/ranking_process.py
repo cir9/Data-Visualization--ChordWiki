@@ -3,12 +3,13 @@ from typing import Callable, Iterable
 
 
 def default_func(list: list[int]) -> float:
+    # return 1 if len(list) > 0 else 0
     r = 0.0
     list.sort()
     pts = [20 / (e + 19) for e in list]
     for i, pt in enumerate(pts):
-        r += (0.5 ** (i + 1)) * pt
-    return r * 10
+        r += (0.9 ** i) * pt
+    return r + 1 if r > 0.001 else 0
 
 
 def process_ranking(path: str, weight_func: Callable[[list[int]], float] = default_func) -> dict[str, float]:
@@ -37,7 +38,7 @@ def process_ranking(path: str, weight_func: Callable[[list[int]], float] = defau
         reader = csv.reader(f)
         # [Title] , [Month]:[Rank] , ...
         for row in reader:
-            title = row[0]
+            title = row[0].replace('+', ' ')
             data = row[1:]
             ranks = [list(map(lambda x: int(x), e.split(':'))) for e in data]
             r[title] = list[float]()
