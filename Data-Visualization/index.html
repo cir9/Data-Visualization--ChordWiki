@@ -150,17 +150,19 @@
         range = length => [...Array(length).keys()]
         
         
+        let heads = ['total', 'weighted',
+              '2012', '2013', '2014', '2015', '2016', '2017', '2018', '2019', '2020', '2021', '2022']
+
+        let colIndex = 0
+
         p = d3.select("body div").on('click', e=>{
             chart3.update([..."ABVAFAJ"])
 
-            // Math.Random()
-            let newData = range(12).map(
-                i=>range(12).map(
-                    j=>Math.random()*10000
-                )
-            );
 
-            update(newData)
+            // Math.Random()
+            let mat = matrixFromColumn(data_of_years, heads[++colIndex % 13])
+
+            update(mat)
 
             p = p.data([1,3,5]).text(d=>d)
                 .join(
@@ -225,21 +227,24 @@
     const arcs =  svg.append("g").attr('id', 'chord-arcs')
     const ribbons = svg.append("g").attr('id', 'chord-ribbons')
 
+
+
+
     // create a matrix
-    const data = [
-      [11975,  5871, 8916, 2868, 1951, 10048, 2060, 6171, 8010, 16145, 8090, 8045,],
-      [ 1951, 10048, 2060, 6171, 8010, 16145, 8090, 8045, 8010, 16145, 8090, 8045,],
-      [ 8010, 16145, 8090, 8045, 1013,   990,  940, 6907, 1951, 10048, 2060, 6171,],
-      [ 1013,   990,  940, 6907, 1013,   990,  940, 6907,11975,  5871, 8916, 2868,],
-      [ 8010, 16145, 8090, 8045, 1013,   990,  940, 6907, 1951, 10048, 2060, 6171,],
-      [ 1013,   990,  940, 6907, 1013,   990,  940, 6907,11975,  5871, 8916, 2868,],
-      [ 1013,   990,  940, 6907, 1013,   990,  940, 6907,11975,  5871, 8916, 2868,],
-      [ 1951, 10048, 2060, 6171, 8010, 16145, 8090, 8045, 8010, 16145, 8090, 8045,],
-      [ 8010, 16145, 8090, 8045, 1013,   990,  940, 6907, 1951, 10048, 2060, 6171,],
-      [11975,  5871, 8916, 2868, 1951, 10048, 2060, 6171, 8010, 16145, 8090, 8045,],
-      [ 1951, 10048, 2060, 6171, 8010, 16145, 8090, 8045, 8010, 16145, 8090, 8045,],
-      [11975,  5871, 8916, 2868, 1951, 10048, 2060, 6171, 8010, 16145, 8090, 8045,],
-    ];
+    // const data = [
+    //   [11975,  5871, 8916, 2868, 1951, 10048, 2060, 6171, 8010, 16145, 8090, 8045,],
+    //   [ 1951, 10048, 2060, 6171, 8010, 16145, 8090, 8045, 8010, 16145, 8090, 8045,],
+    //   [ 8010, 16145, 8090, 8045, 1013,   990,  940, 6907, 1951, 10048, 2060, 6171,],
+    //   [ 1013,   990,  940, 6907, 1013,   990,  940, 6907,11975,  5871, 8916, 2868,],
+    //   [ 8010, 16145, 8090, 8045, 1013,   990,  940, 6907, 1951, 10048, 2060, 6171,],
+    //   [ 1013,   990,  940, 6907, 1013,   990,  940, 6907,11975,  5871, 8916, 2868,],
+    //   [ 1013,   990,  940, 6907, 1013,   990,  940, 6907,11975,  5871, 8916, 2868,],
+    //   [ 1951, 10048, 2060, 6171, 8010, 16145, 8090, 8045, 8010, 16145, 8090, 8045,],
+    //   [ 8010, 16145, 8090, 8045, 1013,   990,  940, 6907, 1951, 10048, 2060, 6171,],
+    //   [11975,  5871, 8916, 2868, 1951, 10048, 2060, 6171, 8010, 16145, 8090, 8045,],
+    //   [ 1951, 10048, 2060, 6171, 8010, 16145, 8090, 8045, 8010, 16145, 8090, 8045,],
+    //   [11975,  5871, 8916, 2868, 1951, 10048, 2060, 6171, 8010, 16145, 8090, 8045,],
+    // ];
     const names = ["A", "B", "C", "D"]
 
     const ribbonPathGenerator = d3.ribbonArrow().radius(227)
@@ -273,7 +278,7 @@
         var res = d3.chordDirected()
             .padAngle(0.02)
             .sortSubgroups(d3.descending)
-            .sortChords(d3.descending)
+            // .sortChords(d3.ascending)
             (matrix)
         
         // add the groups on the inner part of the circle
@@ -326,7 +331,43 @@
         currentArcData = res.groups
     }
 
-    update(data)
+    function matrixFromColumn(data, column){
+        let res = Array(12)
+
+        let keys = data['key']
+        let weights = data[column]
+
+        for(let i=0; i<keys.length; i++){
+            let key = keys[i]
+            let w = weights[i]
+
+            let chords = key.split(' ')
+
+            let source = +chords[0]
+            let target = +chords[1]
+
+            let r = (res[source] || (res[source] = Array(12)))
+            r[target] = w
+        }
+
+        return res
+    }
+
+    let data_of_years = {}
+    
+    d3.dsv(",", "../data/conn_chords.csv", () =>{}, (d) => {
+        for(let column in d){
+            (data_of_years[column] || (data_of_years[column] = [])).push(d[column])
+        }
+        
+    }).then(c=>{
+        let mat = matrixFromColumn(data_of_years, 'total')
+        update(mat)
+
+    })
+
+
+    // update(data)
     </script>
 
 

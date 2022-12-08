@@ -1,6 +1,42 @@
 import csv
 from collections import defaultdict
 from typing import Callable
+import re
+
+
+chord_name_map = {
+    'bI'   : 11, 'I'   : 0,  '#I'   : 1,
+    'bII'  : 1,  'II'  : 2,  '#II'  : 3,
+    'bIII' : 3,  'III' : 4,  '#III' : 5,
+    'bIV'  : 4,  'IV'  : 5,  '#IV'  : 6,
+    'bV'   : 6,  'V'   : 7,  '#V'   : 8,
+    'bVI'  : 8,  'VI'  : 9,  '#VI'  : 10,
+    'bVII' : 10, 'VII' : 11, '#VII' : 0,
+}
+note_name_map = {
+    'b1' : 11, '1' : 0,  '#1' : 1,
+    'b2' : 1,  '2' : 2,  '#2' : 3,
+    'b3' : 3,  '3' : 4,  '#3' : 5,
+    'b4' : 4,  '4' : 5,  '#4' : 6,
+    'b5' : 6,  '5' : 7,  '#5' : 8,
+    'b6' : 8,  '6' : 9,  '#6' : 10,
+    'b7' : 10, '7' : 11, '#7' : 0,
+}
+reg_chordname = re.compile(r'[#b]?(?:VI{1,2}|I?V|I{1,3})')
+reg_bassname = re.compile(r'\/([#b]?[1-7])')
+def get_chord_bass(chord: str):
+    match_bassname = reg_bassname.search(chord)
+    if match_bassname is not None:
+        return note_name_map[match_bassname.group(1)]
+
+    match_chordname = reg_chordname.search(chord)
+    if match_chordname is not None:
+        return chord_name_map[match_chordname.group(0)]
+
+    return 0
+
+
+
 
 
 def process_progressions(path: str, r: dict[str, list[int]]):
@@ -10,6 +46,9 @@ def process_progressions(path: str, r: dict[str, list[int]]):
     first_chords = defaultdict[str, list[float]](lambda: [0.0] * 13)
     two_chords = defaultdict[str, list[float]](lambda: [0.0] * 13)
     three_chords = defaultdict[str, list[float]](lambda: [0.0] * 13)
+
+
+    conn_chords = defaultdict[str, list[float]](lambda: [0.0] * 13)
 
     # data = dict[str, list[str]]()
 
@@ -34,6 +73,7 @@ def process_progressions(path: str, r: dict[str, list[int]]):
             set1 = defaultdict[str, float](lambda: 0)
             set2 = defaultdict[str, float](lambda: 0)
             set3 = defaultdict[str, float](lambda: 0)
+            conn = defaultdict[str, float](lambda: 0)
 
             for progression in progressions:
                 progset[progression] = 1
@@ -45,6 +85,7 @@ def process_progressions(path: str, r: dict[str, list[int]]):
                 set1[chord] += 1
                 if i + 1 < chord_count:
                     set2[chord + ' ' + simple_chords[i+1]] += 1
+                    conn[str(get_chord_bass(chord)) + ' ' + str(get_chord_bass(simple_chords[i+1]))] += 1
                 if i + 2 < chord_count:
                     set3[chord + ' ' + simple_chords[i+1] + ' ' + simple_chords[i+2]] += 1
 
@@ -94,6 +135,15 @@ def process_progressions(path: str, r: dict[str, list[int]]):
                     for i in range(12):
                         in_year[i + 1] += weights[i] * count
 
+
+            for [seg, count] in conn.items():
+                in_year = conn_chords[seg]
+                in_year[0] += count
+
+                if is_rank_in:
+                    for i in range(12):
+                        in_year[i + 1] += weights[i] * count
+
     # Normalization
 
     for i in range(13):
@@ -112,8 +162,14 @@ def process_progressions(path: str, r: dict[str, list[int]]):
         for music in two_chords.values():
             music[i] *= smul2
 
+        for music in conn_chords.values():
+            music[i] *= smul2
+
         for music in three_chords.values():
             music[i] *= smul3
+
+    header = ['key', 'total', 'weighted',
+              '2012', '2013', '2014', '2015', '2016', '2017', '2018', '2019', '2020', '2021', '2022']
 
     with open(path + '/progressions.csv', 'w', newline='', encoding='utf-8-sig') as f:
         writer = csv.writer(f)
@@ -128,6 +184,13 @@ def process_progressions(path: str, r: dict[str, list[int]]):
     with open(path + '/two_chords.csv', 'w', newline='', encoding='utf-8-sig') as f:
         writer = csv.writer(f)
         for k, v in {k: v for k, v in sorted(two_chords.items(), key=lambda item: item[1][0], reverse=True)}.items():
+            writer.writerow([k] + v)
+
+
+    with open(path + '/conn_chords.csv', 'w', newline='', encoding='utf-8-sig') as f:
+        writer = csv.writer(f)
+        writer.writerow(header)
+        for k, v in {k: v for k, v in sorted(conn_chords.items(), key=lambda item: item[1][0], reverse=True)}.items():
             writer.writerow([k] + v)
 
     with open(path + '/three_chords.csv', 'w', newline='', encoding='utf-8-sig') as f:
