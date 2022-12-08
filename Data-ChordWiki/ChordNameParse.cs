@@ -268,11 +268,26 @@ namespace Data_ChordWiki
                     quality = ChordQuality_37.Dominant;
                     fifthType |= FifthType.HalfDiminished;
                 }
-
                 // auto convert Cmb5 to C°
                 if (quality == ChordQuality_37.Minor && degree == 0 && tensions.Remove(ChordTone.Diminished_5th)) {
                     fifthType |= FifthType.Diminished;
                 }
+
+                // auto convert C+5 / C7+5 to C+ / C+7
+                if (((quality == ChordQuality_37.Major && degree == 0) || quality == ChordQuality_37.Dominant) 
+                    && tensions.Remove(ChordTone.Augumented_5th)) {
+                    fifthType |= FifthType.Augmented;
+                }
+
+
+                ChordTone fifthModification = ChordTone.None;
+
+                if (tensions.Remove(ChordTone.Diminished_5th)) {
+                    fifthModification = ChordTone.Diminished_5th;
+                } else if (tensions.Remove(ChordTone.Augumented_5th)) {
+                    fifthModification = ChordTone.Augumented_5th;
+                }
+
 
                 if ((fifthType & FifthType.Diminished) != 0)
                     quality = ChordQuality_37.Diminished;
@@ -318,6 +333,7 @@ namespace Data_ChordWiki
                     fifthType = fifthType,
                     degree = degree,
                     isAltered = isAltered,
+                    fifthModification = fifthModification,
                     adds = adds,
                     tensions = tensions,
                     suspends = suspends,

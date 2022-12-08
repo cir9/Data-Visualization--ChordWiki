@@ -141,7 +141,7 @@ namespace Data_ChordWiki
         public Note MostLikelyKey { get => keyDistribution.OrderBy(e => e.Value).FirstOrDefault(defaultKV).Key; }
         public IEnumerable<(Note key, float possibility)> PossibleKeys {
             get {
-                if (totalNotes == 0) return (Note.Unknown, 0);
+                if (totalNotes == 0) return Enumerable.Empty<(Note, float)>();
                 return keyDistribution.OrderBy(e => -e.Value)
                     .Select(e => (e.Key, e.Value * 1.0f / totalNotes));
             }

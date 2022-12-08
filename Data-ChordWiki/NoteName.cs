@@ -113,14 +113,26 @@ namespace Data_ChordWiki
             return (scaleNumber * 2 + tune + offset + 120) % 12;
         }
 
+
+        static Note[] noteFromSemitones = new Note[] {
+            new () {name = NoteName.C},
+            new () {name = NoteName.D, tune = -1},
+            new () {name = NoteName.D},
+            new () {name = NoteName.E, tune = -1},
+            new () {name = NoteName.E},
+            new () {name = NoteName.F},
+            new () {name = NoteName.G, tune = -1},
+            new () {name = NoteName.G},
+            new () {name = NoteName.A, tune = -1},
+            new () {name = NoteName.A},
+            new () {name = NoteName.B, tune = -1},
+            new () {name = NoteName.B},
+        };
+
         public static Note FromSemitones(int count)
         {
-            int scaleNumber = (count % 12 + 1) / 2;
-            Note result = new() {
-                name = (NoteName)scaleNumber
-            };
-            result.tune = (count - result.GetSemitones() + 6) % 12 - 6;
-            return result;
+            count = (count + 132) % 12;
+            return noteFromSemitones[count];
         }
 
         public Note ToNearestKey(bool isNumber = false)

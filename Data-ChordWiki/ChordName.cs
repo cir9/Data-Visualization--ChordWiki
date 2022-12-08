@@ -11,6 +11,8 @@ namespace Data_ChordWiki
 
     public enum ChordTone
     {
+        None = 65536,
+
         Root = 0,
 
         Minor_3rd = 3,
@@ -80,6 +82,7 @@ namespace Data_ChordWiki
         public bool isAltered;
         public bool isNewParagraph;
         public bool isNewLine;
+        public ChordTone fifthModification;
         public List<ChordTone> adds;
         public List<ChordTone> tensions;
         public List<ChordTone> suspends;
@@ -87,6 +90,7 @@ namespace Data_ChordWiki
 
 
         static readonly Dictionary<ChordTone, string> textFromChordTone = new() {
+            { ChordTone.None, "" },
             { ChordTone.Root, "" }, 
             { ChordTone.Minor_3rd, "m3" },  
             { ChordTone.Major_3rd, "M3" },
@@ -355,15 +359,15 @@ namespace Data_ChordWiki
                 }
             }
 
-            string tension;
+            string fifth = textFromChordTone.GetOrDefault(fifthModification, "");
+
+
+            string tension = "";
             if (!isAlt && sus.Length == 0 && adds.Length == 0 && tensions.Length == 1 && this.tensions[0] <= ChordTone.Natural_9th)
-                if (this.quality == ChordQuality_37.Minor || degree.Length == 0 || !isAltered)
-                    tension = $"(add{tensions[0]})";
-                else
-                    tension = $"add{tensions[0]}";
-            else if (!needBracket)
-                tension = string.Join(string.Empty, tensions);
-            else
+                tension = $"(add{tensions[0]})";
+            //else if (!needBracket)
+            //    tension = string.Join(string.Empty, tensions);
+            else if(tensions.Length > 0)
                 tension = $"({string.Join(',', tensions)})";
 
             string add = adds.Length == 0 ? "" : $"(add{string.Join(',', adds)})";
@@ -376,7 +380,7 @@ namespace Data_ChordWiki
             if (bass != chordRoot) 
                 slash = $"/{bass}";
 
-            return root + mod + quality + degree + sus + alt + tension + add + omit + slash;
+            return root + mod + quality + degree + fifth + sus + alt + tension + add + omit + slash;
         }
 
     }
