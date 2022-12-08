@@ -9,6 +9,13 @@
 # Build results
 
 data/
+Data-Visualization/node_modules
+Data-Visualization--ChordWiki/Data-ChordWiki/vs/
+Data-Visualization--ChordWiki/Data-ChordWiki/bin/
+Data-Visualization--ChordWiki/Data-ChordWiki/obj/
+Data-Visualization--ChordWiki/Data-Analysis/.idea
+Data-Visualization--ChordWiki/Data-Analysis/vs
+Data-Visualization--ChordWiki/Data-Analysis/__pycache__
 
 */[Dd]ebug/
 */[Rr]elease/
