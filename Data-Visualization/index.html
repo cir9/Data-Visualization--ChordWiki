@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<head>
+    <meta charset="utf-8">
+    <title>Chord Visualization</title>
+    <script src=".\node_modules\d3\dist\d3.js"></script>
+
+    <style>
+        .trans > p{
+            transition: 500ms;
+        }
+
+        .fade-out{
+            transform: translateY(-50px);
+        }
+
+        .tooltip{
+            position: absolute;
+            z-index: 1070;
+            display: block;
+            margin: 0;
+            font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol";
+            font-style: normal;
+            font-weight: 400;
+            line-height: 1.5;
+            text-align: left;
+            text-align: start;
+            text-decoration: none;
+            text-shadow: none;
+            text-transform: none;
+            letter-spacing: normal;
+            word-break: normal;
+            word-spacing: normal;
+            white-space: normal;
+            line-break: auto;
+            font-size: .875rem;
+            word-wrap: break-word;
+            opacity: 0;
+        }
+
+    </style>
+
+</head>
+
+<body>
+    <svg>
+        <defs>
+            <pattern id="st-1"  patternUnits="userSpaceOnUse"  width="32" height="32">
+                <rect width="32" height="32" style="fill:#f50000" />
+            </pattern>
+            <pattern id="st-b2"  patternUnits="userSpaceOnUse"  width="32" height="32">
+                <rect width="32" height="32" style="fill:#f50000" />
+                <path transform="scale(8)" d="M-1,1 l2,-2 M0,4 l4,-4 M3,5 l2,-2" 
+                      style="stroke:#f89009; stroke-width:1.414" />
+            </pattern>
+            <pattern id="st-2"  patternUnits="userSpaceOnUse"  width="32" height="32">
+                <rect width="32" height="32" style="fill:#f89009" />
+            </pattern>
+            <pattern id="st-b3"  patternUnits="userSpaceOnUse"  width="32" height="32">
+                <rect width="32" height="32" style="fill:#f89009" />
+                <path transform="scale(8)" d="M-1,1 l2,-2 M0,4 l4,-4 M3,5 l2,-2" 
+                      style="stroke:#e6d900; stroke-width:1.414" />
+            </pattern>
+            <pattern id="st-3"  patternUnits="userSpaceOnUse"  width="32" height="32">
+                <rect width="32" height="32" style="fill:#e6d900" />
+            </pattern>
+            <pattern id="st-4"  patternUnits="userSpaceOnUse"  width="32" height="32">
+                <rect width="32" height="32" style="fill:#22be00" />
+            </pattern>
+            <pattern id="st-b5"  patternUnits="userSpaceOnUse"  width="32" height="32">
+                <rect width="32" height="32" style="fill:#22be00" />
+                <path transform="scale(8)" d="M-1,1 l2,-2 M0,4 l4,-4 M3,5 l2,-2" 
+                      style="stroke:#2a12ff; stroke-width:1.414" />
+            </pattern>
+            <pattern id="st-5"  patternUnits="userSpaceOnUse"  width="32" height="32">
+                <rect width="32" height="32" style="fill:#2a12ff" />
+            </pattern>
+            <pattern id="st-b6"  patternUnits="userSpaceOnUse"  width="32" height="32">
+                <rect width="32" height="32" style="fill:#2a12ff" />
+                <path transform="scale(8)" d="M-1,1 l2,-2 M0,4 l4,-4 M3,5 l2,-2" 
+                      style="stroke:#990fd7; stroke-width:1.414" />
+            </pattern>
+            <pattern id="st-6"  patternUnits="userSpaceOnUse"  width="32" height="32">
+                <rect width="32" height="32" style="fill:#990fd7" />
+            </pattern>
+            <pattern id="st-b7"  patternUnits="userSpaceOnUse"  width="32" height="32">
+                <rect width="32" height="32" style="fill:#990fd7" />
+                <path transform="scale(8)" d="M-1,1 l2,-2 M0,4 l4,-4 M3,5 l2,-2" 
+                      style="stroke:#f40db3; stroke-width:1.414" />
+            </pattern>
+            <pattern id="st-7"  patternUnits="userSpaceOnUse"  width="32" height="32">
+                <rect width="32" height="32" style="fill:#f40db3" />
+            </pattern>
+        </defs>
+
+    </svg>
+
+    <div class="trans">
+        <p>wa</p>
+        <div id="chart_placeholder"></div>
+        <div id="my_dataviz"></div>
+
+        <!-- Create a div for the tooltip -->
+        <div id="tooltip"></div>
+
+    </div>
+
+
+    
+
+    <script>
+        let width = 500
+        alphabet = [..."ABCDEFGHIJKLMNOPQRSTUVWXYZ"]
+        chart3 = (()=>{
+            const svg = d3.create("svg")
+                .attr("viewBox", [0, 0, width, 33])
+                .attr("font-family", "sans-serif")
+                .attr("font-size", 10)
+                .style("display", "block");
+
+            let text = svg.selectAll("text");
+            
+
+            return Object.assign(svg.node(), {
+                update(letters) {
+                    const t = svg.transition().duration(750)
+       
+                    text = text
+                        .data(letters, d => d)
+                        .join(
+                            enter => enter.append("text")
+                                .attr("y", -7)
+                                .attr("dy", "0.35em")
+                                .attr("x", (d, i) => i * 17)
+                                .text(d => d),
+                            update => update,
+                            exit => exit
+                                .call(text => text.transition(t).remove()
+                                .attr("y", 41))
+                        ).call(text => text.transition(t)
+                            .attr("y", 17)
+                            .attr("x", (d, i) => i * 17)
+                        )   
+                },
+            })
+        })()
+
+        d3.select("body div").node().appendChild(chart3)
+
+
+        range = length => [...Array(length).keys()]
+        
+        
+        p = d3.select("body div").on('click', e=>{
+            chart3.update([..."ABVAFAJ"])
+
+            // Math.Random()
+            let newData = range(12).map(
+                i=>range(12).map(
+                    j=>Math.random()*10000
+                )
+            );
+
+            update(newData)
+
+            p = p.data([1,3,5]).text(d=>d)
+                .join(
+                    enter => enter.append("p").text(d=>d),
+                    update => update,
+                    exit => exit.classed("fade-out", true).transition().duration(750).remove()
+                )
+        }).selectAll("p")
+
+        p = p.data([1,3,4,5,6]).text(d=>d)
+        .join(
+            enter => enter.append("p").text(d=>d),
+            update => update,
+            exit => exit.classed("fade-out", true).transition().duration(750).remove()
+        )
+        
+    </script>
+<script>
+
+    const noteFromTone = ['1','b2','2','b3','3','4','b5','5','b6','6','b7', '7']
+
+    // Add a tooltip div. Here I define the general feature of the tooltip: stuff that do not depend on the data point.
+    // Its opacity is set to 0: we don't see it by default.
+    const tooltip = d3.select("#my_dataviz")
+      .append("div")
+      .style("opacity", 0)
+      .attr("class", "tooltip")
+      .style("background-color", "white")
+      .style("border", "solid")
+      .style("border-width", "1px")
+      .style("border-radius", "5px")
+      .style("padding", "10px")
+    
+    // A function that change this tooltip when the user hover a point.
+    // Its opacity is set to 1: we can now see it. Plus it set the text and position of tooltip depending on the datapoint (d)
+    const showTooltip = function(event, d) {
+      tooltip
+        .html("Source: " + names[d.source.index] + "<br>Target: " + names[d.target.index])
+        .style("left", (event.x)/2+100 + "px")
+        .style("top", (event.y)/2+200 + "px")
+        .transition().duration(100)
+        .style("opacity", 1)
+    }
+    
+    // A function that change this tooltip when the leaves a point: just need to set opacity to 0 again
+    var hideTooltip = function(event, d) {
+      tooltip
+        .transition()
+        //.duration(1000)
+        .style("opacity", 0)
+    }
+    
+
+    // create the svg area
+    const svg = d3.select("#my_dataviz")
+      .append("svg")
+        .attr("width", 500)
+        .attr("height", 500)
+      .append("g")
+        .attr("transform", "translate(250,250)")
+    
+    const arcs =  svg.append("g").attr('id', 'chord-arcs')
+    const ribbons = svg.append("g").attr('id', 'chord-ribbons')
+
+    // create a matrix
+    const data = [
+      [11975,  5871, 8916, 2868, 1951, 10048, 2060, 6171, 8010, 16145, 8090, 8045,],
+      [ 1951, 10048, 2060, 6171, 8010, 16145, 8090, 8045, 8010, 16145, 8090, 8045,],
+      [ 8010, 16145, 8090, 8045, 1013,   990,  940, 6907, 1951, 10048, 2060, 6171,],
+      [ 1013,   990,  940, 6907, 1013,   990,  940, 6907,11975,  5871, 8916, 2868,],
+      [ 8010, 16145, 8090, 8045, 1013,   990,  940, 6907, 1951, 10048, 2060, 6171,],
+      [ 1013,   990,  940, 6907, 1013,   990,  940, 6907,11975,  5871, 8916, 2868,],
+      [ 1013,   990,  940, 6907, 1013,   990,  940, 6907,11975,  5871, 8916, 2868,],
+      [ 1951, 10048, 2060, 6171, 8010, 16145, 8090, 8045, 8010, 16145, 8090, 8045,],
+      [ 8010, 16145, 8090, 8045, 1013,   990,  940, 6907, 1951, 10048, 2060, 6171,],
+      [11975,  5871, 8916, 2868, 1951, 10048, 2060, 6171, 8010, 16145, 8090, 8045,],
+      [ 1951, 10048, 2060, 6171, 8010, 16145, 8090, 8045, 8010, 16145, 8090, 8045,],
+      [11975,  5871, 8916, 2868, 1951, 10048, 2060, 6171, 8010, 16145, 8090, 8045,],
+    ];
+    const names = ["A", "B", "C", "D"]
+
+    const ribbonPathGenerator = d3.ribbonArrow().radius(227)
+    const arcPathGenerator = d3.arc().innerRadius(230).outerRadius(240)
+
+    
+    // give this matrix to d3.chord(): it will calculates all the info we need to draw arc and ribbon
+    
+    
+    const GetRibbonKey = ({source: {index: x0}, target: {index: x1}}) => 1 ? `${x0}-${x1}` : `${x1}-${x0}`
+
+    function CacheChordData(data){
+        let dict = {}
+
+        for (let i = 0; i < data.length; i++) {
+            const datum = data[i]
+            dict[GetRibbonKey(datum)] = datum
+        }
+
+        return dict
+    }
+
+    let lastRibbonData, currentRibbonData
+    let lastArcData, currentArcData
+
+    function update(matrix){
+        
+        lastRibbonData = currentRibbonData
+        lastArcData = currentArcData
+
+        var res = d3.chordDirected()
+            .padAngle(0.02)
+            .sortSubgroups(d3.descending)
+            .sortChords(d3.descending)
+            (matrix)
+        
+        // add the groups on the inner part of the circle
+        
+
+        arcs
+        .datum(res)
+        .selectAll("path")
+        .data(
+            d => d.groups,
+            d => d.index,
+        )
+        .join(
+            enter => enter.append("path").attr("d", arcPathGenerator)
+                .style("opacity", 0).transition().duration(500).style('opacity', 1),
+            update => update.transition().duration(500).style('opacity', 1)
+                .attrTween('d', (d,i)=>
+                    t=>arcPathGenerator(d3.interpolate(lastArcData[i], d)(t))
+                ),
+            exit => exit.transition().duration(500).style('opacity',0).remove()    
+        )
+        .style('opacity', 1)
+        .style("fill", d=>`url(#st-${noteFromTone[d.index]})`)        
+        .on("mouseover", (e,d)=>d3.select(e.target).transition().duration(500).style('transform','scale(1.02)'))
+        .on("mouseleave",(e,d)=>d3.select(e.target).transition().duration(500).style('transform','scale(1)'))
+
+        console.log(res)
+
+
+        ribbons
+        .datum(res)
+        .selectAll("path")
+        .data(d => d, d => GetRibbonKey(d))
+        .join(
+            enter => enter.append("path").attr('d', ribbonPathGenerator)
+                .style("opacity", 0).transition().duration(500).style('opacity',0.75),
+            update => update.transition().duration(500).style('opacity',0.75)
+                .attrTween('d', d=> 
+                    t=>ribbonPathGenerator(d3.interpolate(lastRibbonData[GetRibbonKey(d)], d)(t))
+                ),
+            exit => exit.transition().duration(500).style('opacity',0).remove()   
+        )
+        .attr('ribbon-key', d => GetRibbonKey(d))
+        .style("fill", d=>`url(#st-${noteFromTone[d.source.index]})` )
+        // .style("fill", "url(#st-b2)" )
+        .on("mouseover", showTooltip )
+        .on("mouseleave", hideTooltip )
+        
+        currentRibbonData = CacheChordData(res)
+        currentArcData = res.groups
+    }
+
+    update(data)
+    </script>
+
+
+
+
+
+
+
+</body>
