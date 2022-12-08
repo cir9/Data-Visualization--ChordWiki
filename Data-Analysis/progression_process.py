@@ -99,19 +99,21 @@ def process_progressions(path: str, r: dict[str, list[int]]):
     for i in range(13):
 
         mul = 100.0 / sums_in_year[i]
-        smul = 100.0 / notes_in_year[i]
+        smul1 = 100.0 / notes_in_year[i]
+        smul2 = 100.0 / (notes_in_year[i]-1)
+        smul3 = 100.0 / (notes_in_year[i]-2)
 
         for music in prog.values():
             music[i] *= mul
 
         for music in first_chords.values():
-            music[i] *= smul
+            music[i] *= smul1
 
         for music in two_chords.values():
-            music[i] *= smul
+            music[i] *= smul2
 
         for music in three_chords.values():
-            music[i] *= smul
+            music[i] *= smul3
 
     with open(path + '/progressions.csv', 'w', newline='', encoding='utf-8-sig') as f:
         writer = csv.writer(f)
