@@ -219,10 +219,14 @@
     // create the svg area
     const svg = d3.select("#my_dataviz")
       .append("svg")
-        .attr("width", 500)
-        .attr("height", 500)
+        .attr("width", 700)
+        .attr("height", 700)
+        // .attr('viewBox', '-300 -300 300 300')
       .append("g")
-        .attr("transform", "translate(250,250)")
+        .attr('alignment-baseline', 'central')
+        // .attr('x', '50%')
+        // .attr('y', '50%')
+        .attr("transform", "translate(350,350)")
     
     const arcs =  svg.append("g").attr('id', 'chord-arcs')
     const ribbons = svg.append("g").attr('id', 'chord-ribbons')
@@ -247,8 +251,8 @@
     // ];
     const names = ["A", "B", "C", "D"]
 
-    const ribbonPathGenerator = d3.ribbonArrow().radius(227)
-    const arcPathGenerator = d3.arc().innerRadius(230).outerRadius(240)
+    const ribbonPathGenerator = d3.ribbonArrow().radius(260)
+    const arcPathGenerator = d3.arc().innerRadius(270).outerRadius(320)
 
     
     // give this matrix to d3.chord(): it will calculates all the info we need to draw arc and ribbon
@@ -277,8 +281,8 @@
 
         var res = d3.chordDirected()
             .padAngle(0.02)
-            .sortSubgroups(d3.descending)
-            // .sortChords(d3.ascending)
+            .sortSubgroups(d3.ascending)
+            .sortChords(d3.descending)
             (matrix)
         
         // add the groups on the inner part of the circle
