@@ -156,8 +156,33 @@
 
         let colIndex = 0
 
-        p = d3.select("body div").on('click', e=>{
+        p = d3.select("body div").on('click', async e=>{
+            await Tone.start()
+
             chart3.update([..."ABVAFAJ"])
+            
+            // let now = Tone.now()
+            // synthA.triggerAttackRelease("G4", "8n", now)
+            // synthA.triggerAttackRelease("Bb4", "8n", now+0.05, 0.6)
+            // synthA.triggerAttackRelease("E5", "8n", now+0.1, 0.3)
+            // synthA.triggerAttackRelease("D6", "8n", now+0.15, 0.15)
+            // synthB.triggerAttackRelease("C3", "8n", now)
+
+            if (Math.floor(Math.random() * 2) == 0){
+                let now = Tone.now()
+                synthA.triggerAttackRelease("G4", "8n", now)
+                synthA.triggerAttackRelease("D5", "8n", now+0.05, 0.6)
+                synthA.triggerAttackRelease("E5", "8n", now+0.1, 0.3)
+                synthA.triggerAttackRelease("E6", "8n", now+0.15, 0.15)
+                synthB.triggerAttackRelease("C3", "8n", now)
+            } else{
+                let now = Tone.now()
+                synthA.triggerAttackRelease("B4", "8n", now)
+                synthA.triggerAttackRelease("F4", "8n", now+0.05, 0.6)
+                synthA.triggerAttackRelease("D5", "8n", now+0.1, 0.3)
+                synthA.triggerAttackRelease("C6", "8n", now+0.15, 0.15)
+                synthB.triggerAttackRelease("G3", "8n", now)
+            }
 
 
             // Math.Random()
@@ -375,6 +400,14 @@
     // update(data)
     </script>
 
+
+    <script>
+        const synthA = new Tone.FMSynth().toDestination();
+        const synthB = new Tone.AMSynth().toDestination();
+
+
+
+    </script>
 
 
 
