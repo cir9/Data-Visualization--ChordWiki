@@ -380,7 +380,7 @@ namespace Data_ChordWiki
             if (bass != chordRoot) 
                 slash = $"/{bass}";
 
-            return root + mod + quality + degree + fifth + sus + alt + tension + add + omit + slash;
+            return $"{root}{mod}{quality}{degree}{fifth}{sus}{alt}{tension}{add}{omit}{slash}";
         }
 
     }
