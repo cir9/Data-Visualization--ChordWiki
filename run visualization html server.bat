@@ -1,1 +1,1 @@
-npx everywhere
+npx anywhere
