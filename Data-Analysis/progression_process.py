@@ -183,8 +183,18 @@ def process_progressions(path: str, r: dict[str, list[int]]):
 
     with open(path + '/two_chords.csv', 'w', newline='', encoding='utf-8-sig') as f:
         writer = csv.writer(f)
+        writer.writerow(['semi'] + header)
+        i = 0
         for k, v in {k: v for k, v in sorted(two_chords.items(), key=lambda item: item[1][0], reverse=True)}.items():
-            writer.writerow([k] + v)
+            writer.writerow(
+                [
+                    ' '.join(map(lambda x: str(get_chord_bass(x)), k.split(' '))),
+                    k
+                ] + v
+            )
+            i += 1
+            if i > 2000: 
+                break
 
 
     with open(path + '/conn_chords.csv', 'w', newline='', encoding='utf-8-sig') as f:

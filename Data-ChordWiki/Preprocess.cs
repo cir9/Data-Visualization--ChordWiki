@@ -90,7 +90,7 @@ namespace Data_ChordWiki
                         //if (chord.IsMark) continue;
 
                         if (chord.IsProgressionChord) {
-                            string simpleChordName = chord.ToSimpleChord().ToStandardSymbol();
+                            string simpleChordName = chord.ToStandardSymbol();
 
                             if (allSimpleChords.Count == 0 || allSimpleChords[^1] != simpleChordName) {
                                 allSimpleChords.Add(simpleChordName);

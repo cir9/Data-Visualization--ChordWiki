@@ -2,20 +2,22 @@
 <head>
     <meta charset="utf-8">
     <title>Chord Visualization</title>
-    <script src=".\node_modules\d3\dist\d3.js"></script>
-    <script src=".\node_modules\tone\build\Tone.js"></script>
-    <script src=".\node_modules\vue\dist\vue.global.js"></script>
     <link href=".\node_modules\bootstrap\dist\css\bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
 
     <style>
         
         :root {
             --color-1: #ff6060;
+            --color-b2: #ff724b;
             --color-2: #f59f30;
+            --color-b3: #e4b52e;
             --color-3: #d2ca34;
             --color-4: #78f659;
+            --color-b5: #1db9d0;
             --color-5: #5464d6;
+            --color-b6: #6b44b2;
             --color-6: #8f3db2;
+            --color-b7: #b43cb1;
             --color-7: #d33ea8;
         }
         body {
@@ -40,27 +42,25 @@
             background: linear-gradient(15deg, #87bdfa57, #de72de40);
         }
 
+        svg text{
+            user-select: none;
+        }
+
         .trans > *{
             transition: 500ms;
         }
 
-        .chord-name {
-
+        .tween {
+            transition: 500ms
         }
 
-        #prog-list{
-            width: 300px;
-        }
-        
 
         .fade-out{
             transform: translateY(-50px);
         }
 
 
-        .chord-score {
-            font-family: 'DejaVu Math TeX Gyre';
-        }
+
 
         .tooltip{
             /* position: absolute; */
@@ -85,6 +85,71 @@
             word-wrap: break-word;
             opacity: 0;
         }
+
+
+        #prog-list{
+            width: 450px;
+            padding: 0 50px;
+            height: 700px;
+            overflow-y: scroll;
+        }
+        
+        #my_dataviz{
+            height: 700px;
+        }
+
+
+        .note-text {
+            font-family: 'DejaVu Math TeX Gyre';
+            text-align: center;
+            line-height: 1rem;
+            letter-spacing: -0.05rem;
+            user-select: none;
+                /* display: flex;
+                align-items: center */
+        }
+        .note-text > span{
+            font-size: 50%;
+            letter-spacing: -0.1rem;
+        }
+
+
+        .chord-block>div, .chord-block svg{
+            width: 80px;
+            height: 50px;
+        }
+
+        .chord-text-fgn{
+            height: 100%;
+            display: flex;
+            align-content: center;
+            align-items: center;
+            flex-wrap: nowrap;
+            justify-content: center;
+            word-break: break-all;
+        }
+
+
+        .chord-block:hover{
+            filter: drop-shadow(0 0 2em var(--this-color));
+        }
+        .b-example-divider {
+            height: 3rem;
+            background-color: rgba(0, 0, 0, .1);
+            border: solid rgba(0, 0, 0, .15);
+            border-width: 1px 0;
+            box-shadow: inset 0 0.5em 1.5em rgb(0 0 0 / 10%), inset 0 0.125em 0.5em rgb(0 0 0 / 15%);
+        }
+
+        #time-picker{
+            background-color: rgb(230,230,230);
+        }
+
+        #time-picker > div{
+            text-align: center;
+        }
+
+
 
     </style>
 
@@ -170,11 +235,28 @@
                 </div>
             </div> -->
         </div>
+        
 
+        <div class="b-example-divider align-items-center sticky-top row m-0 w-100" id="time-picker">
+            <div class="col">Total</div>
+            <div class="col">Weighted</div>
+            <div class="col">2012</div>
+            <div class="col">2013</div>
+            <div class="col">2014</div>
+            <div class="col">2015</div>
+            <div class="col">2016</div>
+            <div class="col">2017</div>
+            <div class="col">2018</div>
+            <div class="col">2019</div>
+            <div class="col">2020</div>
+            <div class="col">2021</div>
+            <div class="col">2022</div>
+
+        </div>
 
         <div id="chord-diag">
             <div class="d-flex justify-content-center">
-                <div id="chord-title"></div>
+                <div id="chord-title" class="py-4"></div>
             </div>
             <div id="my_dataviz" class="d-flex justify-content-center">
                 <div id="chord-diagram"></div>
@@ -184,7 +266,8 @@
                         div
                     </div>  
                     <div class="flex-grow-1 d-block">
-
+                        <Progression v-for="{chords, p} in GetDeriveredProgressions(currentProgression)"
+                            :key="chords" :data="chords" :p="p" />
                     </div>
                 </div>
 
@@ -194,17 +277,42 @@
         </div>
 
     </div>
-    <script>
-
-        const app = Vue.createApp({
-            data() { return {
-                    count: 0
-            }}
-        })
-        app.mount('#app')
 
 
-    </script>
+    <template id="t-progression">
+        <div class="d-flex flex-row">
+            <div class="chord-block tween" 
+                :style="`--this-color: var(--color-${GetChordBassNote(chord)});`" 
+                v-for="chord in data">
+                <svg class="chord-svg" >
+                    <rect x="1%" y="2%" width="98%" height="82%" fill="#f6f6f6"/>
+                    <rect x="1%" y="84%" width="98%" height="14%" :fill="`url(#st-${GetChordBassNote(chord)})`"/>
+
+                    <foreignObject width="100%" height="100%">
+                        <div class="chord-text-fgn  ">
+                            <div class="note-text" v-html="ReplaceBracket(chord)"></div>
+                        </div>
+                    </foreignObject>
+                    <!-- <text text-anchor="middle" class="note-text" x="50%" y="60%">{{ chord }}</text> -->
+                </svg>
+                <!-- <div class="d-flex flex-row">
+                    <div class="note-text" v-html="ReplaceBracket(chord)">
+                    </div>
+                </div> -->
+            </div>
+            <div class="flex-grow-1">
+                {{ `${p.toFixed(3)}次/首` }}
+            </div>
+        </div>
+    </template>
+
+
+    <script src=".\node_modules\d3\dist\d3.js"></script>
+    <script src=".\node_modules\tone\build\Tone.js"></script>
+    <script src=".\node_modules\vue\dist\vue.global.js"></script>
+
+
+
 
 
     <script>
@@ -249,6 +357,12 @@
 
         const GetChordBassNote = (chord) => noteFromTone[GetChordBass(chord)]
 
+    </script>
+
+
+
+    <script>
+
 
         let progression_index = 0
         let progressions = [
@@ -268,7 +382,7 @@
             const rect = (e,delay) =>
                 e.append('rect').attr('y','-20%').attr('width','25%').attr('height','140%')
                     .style("mix-blend-mode", "hue")
-                    .style("fill", d=>`url(#st-${GetChordBassNote(d)}` ).style('opacity','0')
+                    .style("fill", d=>`url(#st-${GetChordBassNote(d)})` ).style('opacity','0')
                     .transition().duration(1500).delay(delay).style('opacity','0.01')
                     .attr('x', (d,i)=>`${i*25}%`)
 
@@ -312,6 +426,10 @@
     
 
     <script>
+        const data_of_years = {}
+        const data_two_chords = {}        
+        let colIndex = 0
+        let playIndex = 0
 
         const bassNotes = ['G3','Ab3','A3','Bb3','B3','C4','Db4','D4','Eb4','E4','F4','Gb4','G4','Ab4']
         const glassNotes = ['B3',
@@ -349,18 +467,58 @@
 
     </script>
 
+
+<script>
+    // import Progression from './components/progression.vue'
+
+    const app = Vue.createApp({
+        data() { return {
+            currentProgression: []
+        }},
+        methods:{
+            GetDeriveredProgressions(prog){
+                let r = (data_two_chords[prog.join(' ')]||[]).map(
+                    ({chords, in_years})=>({chords, p: (in_years[colIndex]||0)})
+                )
+                r.sort((a,b)=>b.p-a.p)
+                return r
+            },
+            // GetDataFromYear(data){
+            //     return data[colIndex] || 0
+            // }
+        }
+    })
+    app.component('Progression', {
+        template: '#t-progression',
+        props: ['data', 'p'],
+        methods:{
+            GetChordBassNote,
+            GetCurrentDataHtml(cols){
+                return ReplaceBracket(cols[colIndex])
+            },
+            ReplaceBracket(text){
+                return text.replace(/#/,"♯")
+                    .replace(/b/, "♭")
+                    .replace(/(\(.*?\))/,"<span>$1</span>")
+            }, 
+        },
+    })
+
+    app.mount('#app')
+
+</script>
+
+
     <script>
         let width = 500
 
         range = length => [...Array(length).keys()]
         
         
-        let heads = ['total', 'weighted',
+        const heads = ['total', 'weighted',
               '2012', '2013', '2014', '2015', '2016', '2017', '2018', '2019', '2020', '2021', '2022']
 
-        let colIndex = 0
 
-        let playIndex = 0
             // let now = Tone.now()
             // synthA.triggerAttackRelease("G4", "8n", now)
             // synthA.triggerAttackRelease("Bb4", "8n", now+0.05, 0.6)
@@ -372,7 +530,6 @@
             // bass.releaseAll("+0")
             // glass.releaseAll("+0")
 
-        let data_of_years = {}
         
         d3.dsv(",", "../data/conn_chords.csv", () =>{}, (d) => {
             for(let column in d){
@@ -382,6 +539,16 @@
         }).then(c=>{
             let mat = matrixFromColumn(data_of_years, 'total')
             update(mat, 'total')
+
+        })
+
+        d3.dsv(",", "../data/two_chords.csv", () =>{}, (d) => {
+            (data_two_chords[d.semi] || (data_two_chords[d.semi] = [])).push({
+                chords: d.key.split(' '),
+                in_years: [...heads.map(e=>+d[e])]
+            })
+        }).then(c=>{
+            console.log(data_two_chords)
 
         })
 
@@ -405,6 +572,8 @@
         // .style("padding", "10px")
     
     const showTooltip = function(event, d) {
+        
+        app._instance.data.currentProgression = [d.source.index, d.target.index]//.map(e=>`/${e}`)
       tooltip
         .html(`${scaleFromTone[d.source.index]} → ${scaleFromTone[d.target.index]}<br>出现率：${(+currentMatrix[d.source.index][d.target.index]).toFixed(2)}次/首`)
         // .style("left", event.x + 100 + "px")
@@ -521,7 +690,7 @@
                 transition().style('opacity', 1).style('transform','scale(1.02)')
         })
         .on("mouseleave", (e,d)=>{
-            fade(1, 1)(e,d)
+            fade(0.8, 1)(e,d)
             d3.select(e.target).filter(d=>d.p==1).interrupt().
                 transition().style('opacity', 1)  .style('transform','scale(1)')
         })
@@ -534,7 +703,7 @@
             d => d.index,
         )
         .join(
-            enter => enter.append('text').attr("dy", "0.35em").style('user-select', 'none')
+            enter => enter.append('text').attr("dy", "0.35em")// .style('user-select', 'none')
                 .style("opacity", 0).transition().duration(500).style('opacity', 1),
             update => update.transition().duration(500).style('opacity',1)
                 .attrTween('transform', (d,i)=> 
@@ -542,7 +711,7 @@
                 ),
             exit => exit.transition().duration(500).style('opacity',0).remove()    
         )
-        .attr('class', 'chord-score')
+        .attr('class', 'note-text')
         .attr('transform', d=>GetArcTextTranslate(d, 330, 320))
         .attr('text-anchor', 'middle')
         .text((d,i)=>scaleFromTone[i]);
@@ -610,8 +779,9 @@
             .transition().style("opacity", opacity);
     }
 
-    </script>
 
+    
+    </script>
 
 
 
