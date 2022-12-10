@@ -4,19 +4,67 @@
     <title>Chord Visualization</title>
     <script src=".\node_modules\d3\dist\d3.js"></script>
     <script src=".\node_modules\tone\build\Tone.js"></script>
+    <script src=".\node_modules\vue\dist\vue.global.js"></script>
+    <link href=".\node_modules\bootstrap\dist\css\bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
 
     <style>
-        .trans > p{
+        
+        :root {
+            --color-1: #ff6060;
+            --color-2: #f59f30;
+            --color-3: #d2ca34;
+            --color-4: #78f659;
+            --color-5: #5464d6;
+            --color-6: #8f3db2;
+            --color-7: #d33ea8;
+        }
+        body {
+            line-height: 1.5;
+            -webkit-text-size-adjust: 100%;
+            -o-tab-size: 4;
+            tab-size: 4;      
+            font-feature-settings: normal;
+        }
+
+        .large-title {
+            padding-top:200px
+        }
+
+        #large-bg{
+            filter:blur(2px) saturate(40%);
+            
+        }
+
+        .hero {
+            height: 800px;
+            background: linear-gradient(15deg, #87bdfa57, #de72de40);
+        }
+
+        .trans > *{
             transition: 500ms;
         }
+
+        .chord-name {
+
+        }
+
+        #prog-list{
+            width: 300px;
+        }
+        
 
         .fade-out{
             transform: translateY(-50px);
         }
 
+
+        .chord-score {
+            font-family: 'DejaVu Math TeX Gyre';
+        }
+
         .tooltip{
-            position: absolute;
-            z-index: 1070;
+            /* position: absolute; */
+            /* z-index: 1070; */
             display: block;
             margin: 0;
             font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol";
@@ -43,129 +91,266 @@
 </head>
 
 <body>
-    <svg>
+    <svg class="position-absolute">
         <defs>
             <pattern id="st-1"  patternUnits="userSpaceOnUse"  width="32" height="32">
-                <rect width="32" height="32" style="fill:#f50000" />
+                <rect width="32" height="32" style="fill:var(--color-1)" />
             </pattern>
             <pattern id="st-b2"  patternUnits="userSpaceOnUse"  width="32" height="32">
-                <rect width="32" height="32" style="fill:#f50000" />
+                <rect width="32" height="32" style="fill:var(--color-1)" />
                 <path transform="scale(8)" d="M-1,1 l2,-2 M0,4 l4,-4 M3,5 l2,-2" 
-                      style="stroke:#f89009; stroke-width:1.414" />
+                      style="stroke:var(--color-2); stroke-width:1.414" />
             </pattern>
             <pattern id="st-2"  patternUnits="userSpaceOnUse"  width="32" height="32">
-                <rect width="32" height="32" style="fill:#f89009" />
+                <rect width="32" height="32" style="fill:var(--color-2)" />
             </pattern>
             <pattern id="st-b3"  patternUnits="userSpaceOnUse"  width="32" height="32">
-                <rect width="32" height="32" style="fill:#f89009" />
+                <rect width="32" height="32" style="fill:var(--color-2)" />
                 <path transform="scale(8)" d="M-1,1 l2,-2 M0,4 l4,-4 M3,5 l2,-2" 
-                      style="stroke:#e6d900; stroke-width:1.414" />
+                      style="stroke:var(--color-3); stroke-width:1.414" />
             </pattern>
             <pattern id="st-3"  patternUnits="userSpaceOnUse"  width="32" height="32">
-                <rect width="32" height="32" style="fill:#e6d900" />
+                <rect width="32" height="32" style="fill:var(--color-3)" />
             </pattern>
             <pattern id="st-4"  patternUnits="userSpaceOnUse"  width="32" height="32">
-                <rect width="32" height="32" style="fill:#22be00" />
+                <rect width="32" height="32" style="fill:var(--color-4)" />
             </pattern>
             <pattern id="st-b5"  patternUnits="userSpaceOnUse"  width="32" height="32">
-                <rect width="32" height="32" style="fill:#22be00" />
+                <rect width="32" height="32" style="fill:var(--color-4)" />
                 <path transform="scale(8)" d="M-1,1 l2,-2 M0,4 l4,-4 M3,5 l2,-2" 
-                      style="stroke:#2a12ff; stroke-width:1.414" />
+                      style="stroke:var(--color-5); stroke-width:1.414" />
             </pattern>
             <pattern id="st-5"  patternUnits="userSpaceOnUse"  width="32" height="32">
-                <rect width="32" height="32" style="fill:#2a12ff" />
+                <rect width="32" height="32" style="fill:var(--color-5)" />
             </pattern>
             <pattern id="st-b6"  patternUnits="userSpaceOnUse"  width="32" height="32">
-                <rect width="32" height="32" style="fill:#2a12ff" />
+                <rect width="32" height="32" style="fill:var(--color-5)" />
                 <path transform="scale(8)" d="M-1,1 l2,-2 M0,4 l4,-4 M3,5 l2,-2" 
-                      style="stroke:#990fd7; stroke-width:1.414" />
+                      style="stroke:var(--color-6); stroke-width:1.414" />
             </pattern>
             <pattern id="st-6"  patternUnits="userSpaceOnUse"  width="32" height="32">
-                <rect width="32" height="32" style="fill:#990fd7" />
+                <rect width="32" height="32" style="fill:var(--color-6)" />
             </pattern>
             <pattern id="st-b7"  patternUnits="userSpaceOnUse"  width="32" height="32">
-                <rect width="32" height="32" style="fill:#990fd7" />
+                <rect width="32" height="32" style="fill:var(--color-6)" />
                 <path transform="scale(8)" d="M-1,1 l2,-2 M0,4 l4,-4 M3,5 l2,-2" 
-                      style="stroke:#f40db3; stroke-width:1.414" />
+                      style="stroke:var(--color-7); stroke-width:1.414" />
             </pattern>
             <pattern id="st-7"  patternUnits="userSpaceOnUse"  width="32" height="32">
-                <rect width="32" height="32" style="fill:#f40db3" />
+                <rect width="32" height="32" style="fill:var(--color-7)" />
             </pattern>
         </defs>
 
     </svg>
+    <div id="app">
+            
+        <div class="bg-dark text-secondary text-center hero d-flex flex-wrap">
+            
+            <svg class="flex-grow-1">
+                <g id="large-bg"> </g>
+                <g>
+                    <text class="display-5 fw-bold text-white" fill="white" x="50%" y="300" text-anchor="middle" >
+                        Data Visualization of Chord Progressions
+                    </text>
+                    <text class="lead" fill="rgb(155,187,155)" x="50%" y="390" text-anchor="middle" >
+                        和弦进行数据可视化
+                    </text>
+                </g>
+            </svg>
 
-    <div class="trans">
-        <p>wa</p>
-        <div id="chart_placeholder"></div>
-        <div id="my_dataviz"></div>
 
-        <!-- Create a div for the tooltip -->
-        <div id="tooltip"></div>
+            <!-- <div class="large-title flex-grow-1">
+                <h1 class="display-5 fw-bold text-white">Chord Progression Visualization</h1>
+                <div class="col-lg-6 mx-auto">
+                <p class="fs-5 mt-4 mb-4 lead">和弦进行数据可视化</p>
+                <div class="d-grid gap-2 d-sm-flex justify-content-sm-center">
+                    <button type="button" class="btn btn-outline-info btn-lg px-4 me-sm-3 fw-bold">Custom button</button>
+                    <button type="button" class="btn btn-outline-light btn-lg px-4">Secondary</button> 
+                </div>
+                </div>
+            </div> -->
+        </div>
+
+
+        <div id="chord-diag">
+            <div class="d-flex justify-content-center">
+                <div id="chord-title"></div>
+            </div>
+            <div id="my_dataviz" class="d-flex justify-content-center">
+                <div id="chord-diagram"></div>
+
+                <div id="prog-list" class="d-flex flex-column">
+                    <div class="tooltip">
+                        div
+                    </div>  
+                    <div class="flex-grow-1 d-block">
+
+                    </div>
+                </div>
+
+            </div>
+
+
+        </div>
 
     </div>
+    <script>
+
+        const app = Vue.createApp({
+            data() { return {
+                    count: 0
+            }}
+        })
+        app.mount('#app')
 
 
+    </script>
+
+
+    <script>
+
+
+        const noteFromTone = ['1','b2','2','b3','3','4','b5','5','b6','6','b7','7']
+        const c_ScaleFromTone = ['C','C♯/D♭','D','D♯/E♭','E','F','F♯/G♭','G','G♯/A♭','A','A♯/B♭','B']
+        const scaleFromTone = ['1','♯1/♭2','2','♯2/♭3','3','4','♯4/♭5','5','♯5/♭6','6','♯6/♭7','7']
+
+        const chord_name_map = {
+            'bI'   : 11, 'I'   : 0,  '#I'   : 1,
+            'bII'  : 1,  'II'  : 2,  '#II'  : 3,
+            'bIII' : 3,  'III' : 4,  '#III' : 5,
+            'bIV'  : 4,  'IV'  : 5,  '#IV'  : 6,
+            'bV'   : 6,  'V'   : 7,  '#V'   : 8,
+            'bVI'  : 8,  'VI'  : 9,  '#VI'  : 10,
+            'bVII' : 10, 'VII' : 11, '#VII' : 0,
+        }
+        const note_name_map = {
+            'b1' : 11, '1' : 0,  '#1' : 1,
+            'b2' : 1,  '2' : 2,  '#2' : 3,
+            'b3' : 3,  '3' : 4,  '#3' : 5,
+            'b4' : 4,  '4' : 5,  '#4' : 6,
+            'b5' : 6,  '5' : 7,  '#5' : 8,
+            'b6' : 8,  '6' : 9,  '#6' : 10,
+            'b7' : 10, '7' : 11, '#7' : 0,
+        }
+        const reg_chordname = /[#b]?(?:VI{1,2}|I?V|I{1,3})/
+        const reg_bassname = /\/([#b]?[1-7])/
+
+        function GetChordBass(chord){
+            let match_bassname = reg_bassname.exec(chord)
+            if (match_bassname)
+                return note_name_map[match_bassname[1]]
+
+            let match_chordname = reg_chordname.exec(chord)
+            if (match_chordname)
+                return chord_name_map[match_chordname[0]]
+
+            return 0
+        }
+
+        const GetChordBassNote = (chord) => noteFromTone[GetChordBass(chord)]
+
+
+        let progression_index = 0
+        let progressions = [
+            ['IV', 'V', 'IIIm', 'VIm'],
+            ['VIm', 'IV', 'V', 'I'],
+            ['IV', 'III', 'VIm', 'I'],
+            ['I', 'III', 'VIm', 'II'],
+        ]
+
+        // let shown_progression = ['IV', 'V', 'IIIm', 'VIm']
+
+        function update_largeBg(prog){
+          
+            const largeBg = d3.select("#large-bg")
+            
+
+            const rect = (e,delay) =>
+                e.append('rect').attr('y','-20%').attr('width','25%').attr('height','140%')
+                    .style("mix-blend-mode", "hue")
+                    .style("fill", d=>`url(#st-${GetChordBassNote(d)}` ).style('opacity','0')
+                    .transition().duration(1500).delay(delay).style('opacity','0.01')
+                    .attr('x', (d,i)=>`${i*25}%`)
+
+            const text = (e,delay) =>
+                e.append('text').attr('y','85%')
+                    .attr('class', 'chord-score chord-name')
+                    .style('font-size','64').attr('fill', 'white')
+                    .attr('text-anchor', 'middle')
+                    .text((d,i)=>d).style('opacity','0')
+                    .transition().duration(1500).delay(delay).style('opacity','0.01')
+                    .attr('x', (d,i)=>`${(i+0.5)*25}%`)
+
+            const delay = (d,i)=>i*500
+
+            largeBg.selectAll('g').data(prog) //, d=>d)
+                .join(
+                    enter => {
+                        let g = enter.append('g')
+                        rect(g, delay)
+                        text(g, delay)
+                        return g 
+                    },
+                    update => {
+                        update.select('rect').transition().duration(1400).delay(delay).attr('x', (d,i)=>`${i*25}%`).style('opacity','0').remove()
+                        update.select('text').transition().duration(1400).delay(delay).attr('x', (d,i)=>`${(i+0.5)*25}%`).style('opacity','0').remove()
+                        rect(update, delay)
+                        text(update, delay)
+                        return update
+                    },
+                    exit => exit.selectAll('*').transition().style('opacity','0').remove()
+                )
+  
+        }
+        update_largeBg(progressions[0])
+
+        d3.select("#large-bg").on('click', (e,d)=>{
+            progression_index = (progression_index+1)%4
+            update_largeBg(progressions[progression_index])
+        })
+    </script>
     
 
     <script>
+
+        const bassNotes = ['G3','Ab3','A3','Bb3','B3','C4','Db4','D4','Eb4','E4','F4','Gb4','G4','Ab4']
+        const glassNotes = ['B3',
+            'C4','Db4','D4','Eb4','E4','F4','Gb4','G4','Ab4','A4','Bb4','B4',
+            'C5','Db5','D5','Eb5','E5','F5','Gb5','G5','Ab5','A5','Bb5','B5',
+            'C6','Db6','D6','Eb6','E6','F6','Gb6','G6','Ab6','A6','Bb6',
+        ]
+
         const synthA = new Tone.PolySynth(Tone.FMSynth).toDestination();
         const synthB = new Tone.PolySynth(Tone.AMSynth).toDestination();
 
-        const sampler = new Tone.Sampler({
-            urls: {
-                "A3": "bass-A3.mp3",
-                "G3": "bass-G3.mp3",
-                "C4": "bass-C4.mp3",
-                "E4": "bass-E4.mp3",
-                "F4": "bass-F4.mp3",
-                "G4": "bass-G4.mp3",
-            },
+        const bass = new Tone.Sampler({
+            urls: (()=>{
+                let res = {}
+                Array(...bassNotes).forEach(e => {
+                    res[e] = `${e}.mp3`
+                })
+                return res
+            })(),
             release: 1,
-            baseUrl: "../sound/",
+            baseUrl: "../sound/bass/",
+        }).toDestination();
+
+        const glass = new Tone.Sampler({
+            urls: (()=>{
+                let res = {}
+                Array(...glassNotes).forEach(e => {
+                    res[e] = `${e}.mp3`
+                })
+                return res
+            })(),
+            release: 1,
+            baseUrl: "../sound/glass/",
         }).toDestination();
 
     </script>
 
     <script>
         let width = 500
-        alphabet = [..."ABCDEFGHIJKLMNOPQRSTUVWXYZ"]
-        chart3 = (()=>{
-            const svg = d3.create("svg")
-                .attr("viewBox", [0, 0, width, 33])
-                .attr("font-family", "sans-serif")
-                .attr("font-size", 10)
-                .style("display", "block");
-
-            let text = svg.selectAll("text");
-            
-
-            return Object.assign(svg.node(), {
-                update(letters) {
-                    const t = svg.transition().duration(750)
-       
-                    text = text
-                        .data(letters, d => d)
-                        .join(
-                            enter => enter.append("text")
-                                .attr("y", -7)
-                                .attr("dy", "0.35em")
-                                .attr("x", (d, i) => i * 17)
-                                .text(d => d),
-                            update => update,
-                            exit => exit
-                                .call(text => text.transition(t).remove()
-                                .attr("y", 41))
-                        ).call(text => text.transition(t)
-                            .attr("y", 17)
-                            .attr("x", (d, i) => i * 17)
-                        )   
-                },
-            })
-        })()
-
-        d3.select("body div").node().appendChild(chart3)
-
 
         range = length => [...Array(length).keys()]
         
@@ -176,12 +361,6 @@
         let colIndex = 0
 
         let playIndex = 0
-
-        p = d3.select("body div").on('click', async e=>{
-            if (Tone.context.state === "suspended") await Tone.start()
-
-            chart3.update([..."ABVAFAJ"])
-            
             // let now = Tone.now()
             // synthA.triggerAttackRelease("G4", "8n", now)
             // synthA.triggerAttackRelease("Bb4", "8n", now+0.05, 0.6)
@@ -189,86 +368,47 @@
             // synthA.triggerAttackRelease("D6", "8n", now+0.15, 0.15)
             // synthB.triggerAttackRelease("C3", "8n", now)
 
+            
+            // bass.releaseAll("+0")
+            // glass.releaseAll("+0")
 
-            if (playIndex == 0){
-                let now = Tone.now()
-                synthA.triggerAttackRelease("C4", "8n", now)
-                synthA.triggerAttackRelease("E5", "8n", now+0.05, 0.6)
-                synthA.triggerAttackRelease("A5", "8n", now+0.1, 0.3)
-                sampler.triggerAttackRelease("F4", "1n", now)
-            } else if (playIndex == 1){
-                let now = Tone.now()
-                synthA.triggerAttackRelease("B4", "8n", now)
-                synthA.triggerAttackRelease("D5", "8n", now+0.05, 0.5)
-                synthA.triggerAttackRelease("G#5", "8n", now+0.1, 0.4)
-                sampler.triggerAttackRelease("E4", "1n", now)
-            } else if (playIndex == 2){
-                let now = Tone.now()
-                synthA.triggerAttackRelease("G4", "8n", now)
-                synthA.triggerAttackRelease("E4", "8n", now+0.05, 0.6)
-                synthA.triggerAttackRelease("C5", "8n", now+0.1, 0.3)
-                sampler.triggerAttackRelease("A3", "1n", now)
-            } else if (playIndex == 3){
-                let now = Tone.now()
-                synthA.triggerAttackRelease("Bb4", "8n", now)
-                synthA.triggerAttackRelease("D4", "8n", now+0.05, 0.6)
-                synthA.triggerAttackRelease("F5", "8n", now+0.1, 0.3)
-                sampler.triggerAttackRelease("G3", "2n", now)
-
-            } else if (playIndex == 4){
-                let now = Tone.now()
-                synthA.triggerAttackRelease("Bb4", "8n", now)
-                synthA.triggerAttackRelease("E4", "8n", now+0.05, 0.6)
-                synthA.triggerAttackRelease("G5", "8n", now+0.1, 0.3)
-                sampler.triggerAttackRelease("C4", "2n", now)
+        let data_of_years = {}
+        
+        d3.dsv(",", "../data/conn_chords.csv", () =>{}, (d) => {
+            for(let column in d){
+                (data_of_years[column] || (data_of_years[column] = [])).push(d[column])
             }
-            playIndex = (playIndex + 1) % 5
+            
+        }).then(c=>{
+            let mat = matrixFromColumn(data_of_years, 'total')
+            update(mat, 'total')
+
+        })
 
 
-            // Math.Random()
-            let mat = matrixFromColumn(data_of_years, heads[++colIndex % 13])
 
-            update(mat)
-
-            p = p.data([1,3,5]).text(d=>d)
-                .join(
-                    enter => enter.append("p").text(d=>d),
-                    update => update,
-                    exit => exit.classed("fade-out", true).transition().duration(750).remove()
-                )
-        }).selectAll("p")
-
-        p = p.data([1,3,4,5,6]).text(d=>d)
-        .join(
-            enter => enter.append("p").text(d=>d),
-            update => update,
-            exit => exit.classed("fade-out", true).transition().duration(750).remove()
-        )
         
     </script>
+
 <script>
 
-    const noteFromTone = ['1','b2','2','b3','3','4','b5','5','b6','6','b7', '7']
 
-    // Add a tooltip div. Here I define the general feature of the tooltip: stuff that do not depend on the data point.
-    // Its opacity is set to 0: we don't see it by default.
     const tooltip = d3.select("#my_dataviz")
-      .append("div")
-      .style("opacity", 0)
-      .attr("class", "tooltip")
-      .style("background-color", "white")
-      .style("border", "solid")
-      .style("border-width", "1px")
-      .style("border-radius", "5px")
-      .style("padding", "10px")
+    //   .append("div")
+        .select('.tooltip')
+        // .style("opacity", 0)
+        // .attr("class", "tooltip")
+        // .style("background-color", "white")
+        // .style("border", "solid")
+        // .style("border-width", "1px")
+        // .style("border-radius", "5px")
+        // .style("padding", "10px")
     
-    // A function that change this tooltip when the user hover a point.
-    // Its opacity is set to 1: we can now see it. Plus it set the text and position of tooltip depending on the datapoint (d)
     const showTooltip = function(event, d) {
       tooltip
-        .html("Source: " + names[d.source.index] + "<br>Target: " + names[d.target.index])
-        .style("left", (event.x)/2+100 + "px")
-        .style("top", (event.y)/2+200 + "px")
+        .html(`${scaleFromTone[d.source.index]} → ${scaleFromTone[d.target.index]}<br>出现率：${(+currentMatrix[d.source.index][d.target.index]).toFixed(2)}次/首`)
+        // .style("left", event.x + 100 + "px")
+        // .style("top", event.y +200 + "px")
         .transition().duration(100)
         .style("opacity", 1)
     }
@@ -278,52 +418,41 @@
       tooltip
         .transition()
         //.duration(1000)
-        .style("opacity", 0)
+        // .style("opacity", 0)
     }
     
 
+    const title = d3.select("#chord-title").text('what')
+
+
     // create the svg area
-    const svg = d3.select("#my_dataviz")
+    const svg = d3.select("#chord-diagram")
       .append("svg")
-        .attr("width", 700)
+        .attr("width", 800)
         .attr("height", 700)
         // .attr('viewBox', '-300 -300 300 300')
       .append("g")
         .attr('alignment-baseline', 'central')
-        // .attr('x', '50%')
-        // .attr('y', '50%')
-        .attr("transform", "translate(350,350)")
+        .attr("transform", "translate(400,350)")
     
     const arcs =  svg.append("g").attr('id', 'chord-arcs')
     const ribbons = svg.append("g").attr('id', 'chord-ribbons')
+    const arcTexts = svg.append('g').attr('id', 'chord-root')
 
-
-
-
-    // create a matrix
-    // const data = [
-    //   [11975,  5871, 8916, 2868, 1951, 10048, 2060, 6171, 8010, 16145, 8090, 8045,],
-    //   [ 1951, 10048, 2060, 6171, 8010, 16145, 8090, 8045, 8010, 16145, 8090, 8045,],
-    //   [ 8010, 16145, 8090, 8045, 1013,   990,  940, 6907, 1951, 10048, 2060, 6171,],
-    //   [ 1013,   990,  940, 6907, 1013,   990,  940, 6907,11975,  5871, 8916, 2868,],
-    //   [ 8010, 16145, 8090, 8045, 1013,   990,  940, 6907, 1951, 10048, 2060, 6171,],
-    //   [ 1013,   990,  940, 6907, 1013,   990,  940, 6907,11975,  5871, 8916, 2868,],
-    //   [ 1013,   990,  940, 6907, 1013,   990,  940, 6907,11975,  5871, 8916, 2868,],
-    //   [ 1951, 10048, 2060, 6171, 8010, 16145, 8090, 8045, 8010, 16145, 8090, 8045,],
-    //   [ 8010, 16145, 8090, 8045, 1013,   990,  940, 6907, 1951, 10048, 2060, 6171,],
-    //   [11975,  5871, 8916, 2868, 1951, 10048, 2060, 6171, 8010, 16145, 8090, 8045,],
-    //   [ 1951, 10048, 2060, 6171, 8010, 16145, 8090, 8045, 8010, 16145, 8090, 8045,],
-    //   [11975,  5871, 8916, 2868, 1951, 10048, 2060, 6171, 8010, 16145, 8090, 8045,],
-    // ];
     const names = ["A", "B", "C", "D"]
 
-    const ribbonPathGenerator = d3.ribbonArrow().radius(260)
-    const arcPathGenerator = d3.arc().innerRadius(270).outerRadius(320)
+    const ribbonPathGenerator = d3.ribbonArrow().radius(267).headRadius(30)
+    const arcPathGenerator = d3.arc().innerRadius(270).outerRadius(300)
 
+
+
+    const GetTranslate = (angle, width, height) => 
+        `translate(${Math.sin(angle) * width} ${-Math.cos(angle) * height})`
     
-    // give this matrix to d3.chord(): it will calculates all the info we need to draw arc and ribbon
+    const GetArcTextTranslate = 
+        ({startAngle, endAngle}, width, height) => GetTranslate((startAngle + endAngle)/2, width, height)
     
-    
+
     const GetRibbonKey = ({source: {index: x0}, target: {index: x1}}) => 1 ? `${x0}-${x1}` : `${x1}-${x0}`
 
     function CacheChordData(data){
@@ -337,10 +466,21 @@
         return dict
     }
 
+
+    d3.select("#my_dataviz").on('click', e=>{
+        colIndex = (colIndex+1) % 13
+        let mat = matrixFromColumn(data_of_years, heads[colIndex])
+        update(mat, heads[colIndex])
+    })
+
     let lastRibbonData, currentRibbonData
     let lastArcData, currentArcData
 
-    function update(matrix){
+    let currentMatrix
+    function update(matrix, t){
+
+        currentMatrix = matrix
+        title.text(t)
         
         lastRibbonData = currentRibbonData
         lastArcData = currentArcData
@@ -351,49 +491,79 @@
             .sortChords(d3.descending)
             (matrix)
         
-        // add the groups on the inner part of the circle
         
 
-        arcs
-        .datum(res)
+        arcs.datum(res)
         .selectAll("path")
         .data(
             d => d.groups,
             d => d.index,
         )
         .join(
-            enter => enter.append("path").attr("d", arcPathGenerator)
+            enter => enter.append("path").attr("d", arcPathGenerator).attr('id',d => 'arc-'+d.index).each(d=>d.p=1)
                 .style("opacity", 0).transition().duration(500).style('opacity', 1),
-            update => update.transition().duration(500).style('opacity', 1)
+            update => update.filter(d=>!d.exit).transition().duration(500).style('opacity', 1).style('transform','scale(1)')
                 .attrTween('d', (d,i)=>
-                    t=>arcPathGenerator(d3.interpolate(lastArcData[i], d)(t))
+                    t=>arcPathGenerator(d3.interpolate(lastArcData[i], d)(d.p=t))
                 ),
             exit => exit.transition().duration(500).style('opacity',0).remove()    
         )
         .style('opacity', 1)
-        .style("fill", d=>`url(#st-${noteFromTone[d.index]})`)        
-        .on("mouseover", (e,d)=>d3.select(e.target).transition().duration(500).style('transform','scale(1.02)'))
-        .on("mouseleave",(e,d)=>d3.select(e.target).transition().duration(500).style('transform','scale(1)'))
+        .style("fill", d=>`url(#st-${noteFromTone[d.index]})`)
+        .on('click', (e,d)=>{
+            let mat = matrixFromColumn(data_of_years, heads[colIndex],(f,t)=>f==d.index||t==d.index)
+            update(mat, heads[colIndex] + '-' + d.index)
+            e.stopPropagation()
+        })
+        .on("mouseover", (e,d)=>{
+            fade(0.05, 0.3)(e,d)
+            d3.select(e.target).filter(d=>d.p==1).interrupt().
+                transition().style('opacity', 1).style('transform','scale(1.02)')
+        })
+        .on("mouseleave", (e,d)=>{
+            fade(1, 1)(e,d)
+            d3.select(e.target).filter(d=>d.p==1).interrupt().
+                transition().style('opacity', 1)  .style('transform','scale(1)')
+        })
 
-        console.log(res)
+
+        arcTexts.datum(res)
+        .selectAll("text")
+        .data(
+            d => d.groups,
+            d => d.index,
+        )
+        .join(
+            enter => enter.append('text').attr("dy", "0.35em").style('user-select', 'none')
+                .style("opacity", 0).transition().duration(500).style('opacity', 1),
+            update => update.transition().duration(500).style('opacity',1)
+                .attrTween('transform', (d,i)=> 
+                    t=>GetArcTextTranslate(d3.interpolate(lastArcData[i], d)(t),330,320)
+                ),
+            exit => exit.transition().duration(500).style('opacity',0).remove()    
+        )
+        .attr('class', 'chord-score')
+        .attr('transform', d=>GetArcTextTranslate(d, 330, 320))
+        .attr('text-anchor', 'middle')
+        .text((d,i)=>scaleFromTone[i]);
 
 
-        ribbons
-        .datum(res)
+
+
+        ribbons.datum(res)
         .selectAll("path")
         .data(d => d, d => GetRibbonKey(d))
         .join(
-            enter => enter.append("path").attr('d', ribbonPathGenerator).style("mix-blend-mode", "multiply")
-                .style("opacity", 0).transition().duration(500).style('opacity',0.75),
-            update => update.transition().duration(500).style('opacity',0.75)
+            enter => enter.append("path").each(d=>d.p=1).attr('d', ribbonPathGenerator).style("mix-blend-mode", "multiply")
+                .style("opacity", 0).transition().duration(500).style('opacity',0.8),
+            update => update.filter(d=>!d.exit).transition().duration(500).style('opacity',0.8)
                 .attrTween('d', d=> 
-                    t=>ribbonPathGenerator(d3.interpolate(lastRibbonData[GetRibbonKey(d)], d)(t))
+                    t=>ribbonPathGenerator(d3.interpolate(lastRibbonData[GetRibbonKey(d)], d)(d.p=t))
                 ),
-            exit => exit.transition().duration(500).style('opacity',0).remove()   
+            exit => exit.each(d=>d.exit = true).transition().duration(500).style('opacity',0).remove()   
         )
         .attr('ribbon-key', d => GetRibbonKey(d))
         .style("fill", d=>`url(#st-${noteFromTone[d.source.index]})` )
-        // .style("fill", "url(#st-b2)" )
         .on("mouseover", showTooltip )
         .on("mouseleave", hideTooltip )
         
@@ -401,11 +571,15 @@
         currentArcData = res.groups
     }
 
-    function matrixFromColumn(data, column){
+    function matrixFromColumn(data, column, filter){
         let res = Array(12)
 
         let keys = data['key']
         let weights = data[column]
+
+        for (let index = 0; index < 12; index++) {
+            res[index] = Array(12)
+        }
 
         for(let i=0; i<keys.length; i++){
             let key = keys[i]
@@ -416,28 +590,26 @@
             let source = +chords[0]
             let target = +chords[1]
 
-            let r = (res[source] || (res[source] = Array(12)))
-            r[target] = w
+            if(filter){
+                if(!filter(source, target)) {
+                    res[source][target] = 0
+                    continue
+                }
+            }
+
+            res[source][target] = w
         }
 
         return res
     }
 
-    let data_of_years = {}
-    
-    d3.dsv(",", "../data/conn_chords.csv", () =>{}, (d) => {
-        for(let column in d){
-            (data_of_years[column] || (data_of_years[column] = [])).push(d[column])
-        }
-        
-    }).then(c=>{
-        let mat = matrixFromColumn(data_of_years, 'total')
-        update(mat)
-
-    })
 
 
-    // update(data)
+    const fade = (opacity, arcOp) => (event, datum) => {
+        ribbons.selectAll("path").filter(d => d.source.index != datum.index && d.target.index != datum.index && d.p>0.999 && !d.exit)
+            .transition().style("opacity", opacity);
+    }
+
     </script>
 
 
