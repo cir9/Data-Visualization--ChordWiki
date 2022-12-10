@@ -143,13 +143,31 @@
 
         #time-picker{
             background-color: rgb(230,230,230);
+            padding: 0;
+            border: none;
         }
 
         #time-picker > div{
             text-align: center;
+            height: 100%;
+            display: flex;
+            align-content: center;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: 200ms;
         }
 
 
+        #time-picker > .selected{
+            background-color: rgb(30 13 62 /60%);
+            color: white;
+            font-weight: bold;
+        }
+
+        #time-picker > div:hover{
+            background-color: rgba(21, 7, 72, 0.3);
+        }
 
     </style>
 
@@ -238,20 +256,10 @@
         
 
         <div class="b-example-divider align-items-center sticky-top row m-0 w-100" id="time-picker">
-            <div class="col">Total</div>
-            <div class="col">Weighted</div>
-            <div class="col">2012</div>
-            <div class="col">2013</div>
-            <div class="col">2014</div>
-            <div class="col">2015</div>
-            <div class="col">2016</div>
-            <div class="col">2017</div>
-            <div class="col">2018</div>
-            <div class="col">2019</div>
-            <div class="col">2020</div>
-            <div class="col">2021</div>
-            <div class="col">2022</div>
-
+            <div v-for="(column,index) in heads" :class="`col${index==colIndex?' selected':''}`"
+                 @click="SelectHeadIndex(index)">
+                {{column.toUpperCase() }}
+            </div>
         </div>
 
         <div id="chord-diag">
@@ -317,6 +325,14 @@
 
     <script>
 
+        const data_of_years = {}
+        const data_two_chords = {}        
+        let colIndex = 0
+        let playIndex = 0        
+        let currentChordFilter = null
+        
+        const heads = ['total', 'weighted',
+              '2012', '2013', '2014', '2015', '2016', '2017', '2018', '2019', '2020', '2021', '2022']
 
         const noteFromTone = ['1','b2','2','b3','3','4','b5','5','b6','6','b7','7']
         const c_ScaleFromTone = ['C','C♯/D♭','D','D♯/E♭','E','F','F♯/G♭','G','G♯/A♭','A','A♯/B♭','B']
@@ -426,10 +442,8 @@
     
 
     <script>
-        const data_of_years = {}
-        const data_two_chords = {}        
-        let colIndex = 0
-        let playIndex = 0
+
+
 
         const bassNotes = ['G3','Ab3','A3','Bb3','B3','C4','Db4','D4','Eb4','E4','F4','Gb4','G4','Ab4']
         const glassNotes = ['B3',
@@ -473,7 +487,8 @@
 
     const app = Vue.createApp({
         data() { return {
-            currentProgression: []
+            currentProgression: [],
+            heads, colIndex,
         }},
         methods:{
             GetDeriveredProgressions(prog){
@@ -483,6 +498,11 @@
                 r.sort((a,b)=>b.p-a.p)
                 return r
             },
+            SelectHeadIndex(index){
+                this.colIndex = colIndex = index
+                let mat = matrixFromColumn(data_of_years, heads[this.colIndex], currentChordFilter)
+                update(mat, heads[colIndex])
+            }
             // GetDataFromYear(data){
             //     return data[colIndex] || 0
             // }
@@ -513,10 +533,20 @@
         let width = 500
 
         range = length => [...Array(length).keys()]
-        
-        
-        const heads = ['total', 'weighted',
-              '2012', '2013', '2014', '2015', '2016', '2017', '2018', '2019', '2020', '2021', '2022']
+
+
+        // d3.select('#time-picker').selectAll('div')
+        //     .data(heads).join('div')
+        //     .attr('class', 'col')
+        //     .text(d=>d.toUpperCase())
+        //     .on('click', (e,d)=>{
+        //         colIndex = (colIndex+1) % 13
+        //         let mat = matrixFromColumn(data_of_years, heads[colIndex])
+        //         update(mat, heads[colIndex])
+        //     })
+        //     .filter((d,i)=>i==0).attr('class','col selected')
+
+
 
 
             // let now = Tone.now()
@@ -561,33 +591,20 @@
 
 
     const tooltip = d3.select("#my_dataviz")
-    //   .append("div")
         .select('.tooltip')
-        // .style("opacity", 0)
-        // .attr("class", "tooltip")
-        // .style("background-color", "white")
-        // .style("border", "solid")
-        // .style("border-width", "1px")
-        // .style("border-radius", "5px")
-        // .style("padding", "10px")
-    
+
     const showTooltip = function(event, d) {
         
         app._instance.data.currentProgression = [d.source.index, d.target.index]//.map(e=>`/${e}`)
       tooltip
         .html(`${scaleFromTone[d.source.index]} → ${scaleFromTone[d.target.index]}<br>出现率：${(+currentMatrix[d.source.index][d.target.index]).toFixed(2)}次/首`)
-        // .style("left", event.x + 100 + "px")
-        // .style("top", event.y +200 + "px")
         .transition().duration(100)
         .style("opacity", 1)
     }
     
-    // A function that change this tooltip when the leaves a point: just need to set opacity to 0 again
     var hideTooltip = function(event, d) {
       tooltip
         .transition()
-        //.duration(1000)
-        // .style("opacity", 0)
     }
     
 
@@ -607,8 +624,6 @@
     const arcs =  svg.append("g").attr('id', 'chord-arcs')
     const ribbons = svg.append("g").attr('id', 'chord-ribbons')
     const arcTexts = svg.append('g').attr('id', 'chord-root')
-
-    const names = ["A", "B", "C", "D"]
 
     const ribbonPathGenerator = d3.ribbonArrow().radius(267).headRadius(30)
     const arcPathGenerator = d3.arc().innerRadius(270).outerRadius(300)
@@ -637,13 +652,15 @@
 
 
     d3.select("#my_dataviz").on('click', e=>{
-        colIndex = (colIndex+1) % 13
+        if(!currentChordFilter) return
         let mat = matrixFromColumn(data_of_years, heads[colIndex])
         update(mat, heads[colIndex])
+        currentChordFilter = null
     })
 
     let lastRibbonData, currentRibbonData
     let lastArcData, currentArcData
+
 
     let currentMatrix
     function update(matrix, t){
@@ -680,7 +697,7 @@
         .style('opacity', 1)
         .style("fill", d=>`url(#st-${noteFromTone[d.index]})`)
         .on('click', (e,d)=>{
-            let mat = matrixFromColumn(data_of_years, heads[colIndex],(f,t)=>f==d.index||t==d.index)
+            let mat = matrixFromColumn(data_of_years, heads[colIndex], currentChordFilter = (f,t)=>f==d.index||t==d.index)
             update(mat, heads[colIndex] + '-' + d.index)
             e.stopPropagation()
         })
