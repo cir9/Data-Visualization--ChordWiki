@@ -5,6 +5,32 @@
     <link href=".\node_modules\bootstrap\dist\css\bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
 
     <style>
+
+        .chord-tip{
+            position: absolute; 
+            z-index: 1070;
+            display: block;
+            margin: 0;
+            font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol";
+            font-style: normal;
+            font-weight: 400;
+            line-height: 1.5;
+            text-align: left;
+            text-align: start;
+            text-decoration: none;
+            text-shadow: none;
+            text-transform: none;
+            letter-spacing: normal;
+            word-break: normal;
+            word-spacing: normal;
+            white-space: normal;
+            line-break: auto;
+            font-size: .875rem;
+            word-wrap: break-word;
+            opacity: 0;
+        }
+
+
         
         :root {
             --color-1: #ff6060;
@@ -293,7 +319,7 @@
                 </div>
                 <div>
                     <div class="prog-header py-2">
-                        <div class="note-text" v-cloak>{{ currentProgressionName }}</div>
+                        <div class="note-text" v-if="currentProgressionPoss" v-cloak>{{ currentProgressionName }}</div>
                         <div>
                             <span class="unit-small" v-if="currentProgressionPoss != ''">出现率：</span>
                             <span class="unit-main" v-cloak>
@@ -376,6 +402,7 @@
         let colIndex = 0
         let playIndex = 0        
         let currentChordFilter = null
+        let currentSelectedBass = 0
         
         const heads = ['total', 'weighted',
               '2012', '2013', '2014', '2015', '2016', '2017', '2018', '2019', '2020', '2021', '2022']
@@ -556,7 +583,7 @@
                 
                 update(mat, 
                     currentChordFilter
-                     ? `${heads[colIndex].toUpperCase()} - 起始和弦低音为 <span class="note-text">${noteFromTone[d.index]}</span>`
+                     ? `${heads[colIndex].toUpperCase()} - 起始和弦低音为 <span class="note-text">${noteFromTone[currentSelectedBass]}</span>`
                      : heads[colIndex].toUpperCase())
 
                 this.currentProgressionName = `${scaleFromTone[this.currentProgression[0]]} → ${scaleFromTone[this.currentProgression[1]]}`
@@ -755,6 +782,7 @@
         .style("fill", d=>`url(#st-${noteFromTone[d.index]})`)
         .on('click', (e,d)=>{
             let mat = matrixFromColumn(data_of_years, heads[colIndex], currentChordFilter = (f,t)=>f==d.index)
+            currentSelectedBass = d.index
             update(mat, `${heads[colIndex].toUpperCase()} - 起始和弦低音为 <span class="note-text">${noteFromTone[d.index]}</span>`)
             e.stopPropagation()
         })
