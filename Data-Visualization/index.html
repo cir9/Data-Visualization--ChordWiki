@@ -6,28 +6,17 @@
 
     <style>
 
-        .chord-tip{
+        #chord-tip{
             position: absolute; 
             z-index: 1070;
-            display: block;
             margin: 0;
-            font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol";
-            font-style: normal;
-            font-weight: 400;
-            line-height: 1.5;
-            text-align: left;
-            text-align: start;
-            text-decoration: none;
-            text-shadow: none;
-            text-transform: none;
-            letter-spacing: normal;
-            word-break: normal;
-            word-spacing: normal;
-            white-space: normal;
-            line-break: auto;
-            font-size: .875rem;
+            background-color: white;
             word-wrap: break-word;
             opacity: 0;
+            width: 300px;
+            height: 200px;
+            box-shadow: 0px 6px 20px 5px rgb(0 0 0 / 20%);
+            border-radius: 8px;
         }
 
 
@@ -163,13 +152,16 @@
 
 
         #time-picker > .selected{
-            background-color: rgb(30 13 62 /60%);
+            background-color: rgb(112 97 141 / 60%);
             color: white;
             font-weight: bold;
+            border-bottom: 6px solid rgb(74 5 160 / 90%)!important;
         }
 
         #time-picker > div:hover{
+            color: white;
             background-color: rgba(21, 7, 72, 0.3);
+            border-bottom: 4px solid rgba(74, 5, 160, 0.502);
         }
         
         .histogram {
@@ -178,7 +170,7 @@
             padding: 0 2px;
         }
 
-        .histogram rect:hover{
+        .histogram .hist-bar:hover{
             fill: rgba(21, 7, 72, 0.4);
         }
 
@@ -192,7 +184,7 @@
 
         .unit-main{
             
-            color: rgb(72, 51, 117);
+            color: rgb(39 40 152);
         }
 
         .unit-small{
@@ -208,6 +200,10 @@
 
         .pb-6{
             padding-bottom: 6rem!important;
+        }
+
+        .selected-arc {
+            filter: url(#glow);
         }
 
 
@@ -268,15 +264,35 @@
             <pattern id="st-7"  patternUnits="userSpaceOnUse"  width="32" height="32">
                 <rect width="32" height="32" style="fill:var(--color-7)" />
             </pattern>
-        </defs>
 
+            <pattern id="dash-line"  patternUnits="userSpaceOnUse"  width="6" height="2">
+                <rect width="3" height="2" style="fill:rgba(255,255,255,0.5)" />
+                <rect width="6" x="3" height="2" style="fill:#6b5393ee" />
+            </pattern>
+            <filter id="glow">
+				<fegaussianblur class="blur" result="coloredBlur" stddeviation="2"></fegaussianblur>
+				<femerge>
+					<femergenode in="coloredBlur"></femergenode>
+                    <femergenode in="coloredBlur"></femergenode>
+                    <femergenode in="coloredBlur"></femergenode>
+					<femergenode in="SourceGraphic"></femergenode>
+				</femerge>
+			</filter>
+        </defs>
     </svg>
+
+    <div id="chord-tip">
+        test
+
+    </div>
+
+
     <div id="app">
             
         <div class="bg-dark text-secondary text-center hero d-flex flex-wrap">
             
             <svg class="flex-grow-1">
-                <g id="large-bg"> </g>
+                <g id="large-bg"></g>
                 <g>
                     <text class="display-5 fw-bold text-white" fill="white" x="50%" y="300" text-anchor="middle" >
                         Data Visualization of Chord Progressions
@@ -295,7 +311,7 @@
         <div class="b-example-divider align-items-center sticky-top row m-0 w-100" id="time-picker">
             <div v-for="(column,index) in heads" :class="`col${index==colIndex?' selected':''}`"
                  @click="SelectHeadIndex(index)" v-cloak>
-                {{column.toUpperCase() }}
+                {{ column.toUpperCase() }}
             </div>
         </div>
 
@@ -354,8 +370,8 @@
     <template id="t-progression">
         <div class="d-flex flex-row chord-line">
             <div class="chord-block tween" 
-                :style="`--this-color: var(--color-${GetChordBassNote(chord)});`" 
-                v-for="chord in data">
+                v-for="chord in data" @mouseover="showChordTip" @mouseleave="hideChordTip"
+                :style="`--this-color: var(--color-${GetChordBassNote(chord)});`" >
                 <svg class="chord-svg" >
                     <rect x="1%" y="2%" width="98%" height="82%" fill="#f6f6f6"/>
                     <rect x="1%" y="84%" width="98%" height="14%" :fill="`url(#st-${GetChordBassNote(chord)})`"/>
@@ -368,12 +384,17 @@
             </div>
             <div class="flex-grow-1 d-flex">
                 <svg class="histogram">
-                    <rect v-for="(v,i) in hist"
+                    <rect v-for="(v,i) in hist" class="hist-bar"
                         :x="`${(i<2?i:i+0.3)/(hist.length+0.3)*100}%`"    :y="`${(1-v/max*0.8)*100}%`"
                         :width="`${1/(hist.length+0.3)*95}%`"        :height="`${v/max*80}%`" 
-                        :fill="isCurrentCol(i)?'#6b5393':'#555'"
+                        :fill="isCurrentCol(i)?'#4a05a0':'#555'"
                         @click="$emit('selectColumn', i)"
                         :title="`${v.toFixed(3)}次/首 - ${GetColTitle(i)}`"
+                    />
+                    <rect 
+                        :x="`${2/(hist.length+0.3)*100}%`"    :y="`${(1-hist[1]/max*0.8)*100}%`"
+                        :width="`${hist.length/(hist.length+0.3)*95}%`"  height="2%" 
+                        fill="url(#dash-line)" stroke-dasharray="5,5"        
                     />
                 </svg>
                 <div class="hist-text">
@@ -406,6 +427,15 @@
         
         const heads = ['total', 'weighted',
               '2012', '2013', '2014', '2015', '2016', '2017', '2018', '2019', '2020', '2021', '2022']
+        const headsTitle = ['总计', '热门总计 (2012-2022年)',
+              '2012年热门', '2013年热门', '2014年热门', '2015年热门', '2016年热门',
+              '2017年热门', '2018年热门', '2019年热门', '2020年热门', '2021年热门', '2022年热门']
+
+    </script>
+
+
+
+    <script>
 
         const noteFromTone = ['1','b2','2','b3','3','4','b5','5','b6','6','b7','7']
         const c_ScaleFromTone = ['C','C♯/D♭','D','D♯/E♭','E','F','F♯/G♭','G','G♯/A♭','A','A♯/B♭','B']
@@ -446,11 +476,6 @@
 
         const GetChordBassNote = (chord) => noteFromTone[GetChordBass(chord)]
 
-    </script>
-
-
-
-    <script>
 
 
         let progression_index = 0
@@ -513,9 +538,30 @@
         })
     </script>
     
-
     <script>
 
+        const chordTip = d3.select('#chord-tip')
+
+        const showChordTip = function(event, d) {
+            chordTip
+                .style("left", (event.x-150) + "px")
+                .style("top", (event.y + window.pageYOffset -230) + "px")
+                .style('display', 'block')
+                .transition().duration(100)
+                .style("opacity", 1)
+        }
+
+        var hideChordTip = function(event) {
+            chordTip.interrupt()
+                .transition()
+                .duration(300)
+                .style("opacity", 0)
+                .end().then(() => 
+                    chordTip.style('display', 'none')
+                        .style("left","0px")
+                        .style("top", "0px")
+                ).catch(e=>{})
+        }
 
 
         const bassNotes = ['G3','Ab3','A3','Bb3','B3','C4','Db4','D4','Eb4','E4','F4','Gb4','G4','Ab4']
@@ -555,70 +601,71 @@
     </script>
 
 
-<script>
-    const app = Vue.createApp({
-        data() { return {
-            currentProgression: [],
-            currentProgressionMax: 0,
-            heads, colIndex:0,
-            currentProgressionName: '',
-            currentProgressionPoss: '',
-        }},
-        methods:{
-            GetDeriveredProgressions(prog){
-                let r = (data_two_chords[prog.join(' ')]||[]).map(
-                    ({chords, in_years})=>({
-                        chords, 
-                        p: (in_years[colIndex]||0.0), 
-                        hist: in_years,
-                    })
-                )
-                this.currentProgressionMax = Math.max(...r.map(e=>Math.max(...e.hist)))
-                // r.sort((a,b)=>b.p-a.p)
-                return r
-            },
-            SelectHeadIndex(index){
-                this.colIndex = colIndex = index
-                let mat = matrixFromColumn(data_of_years, heads[this.colIndex], currentChordFilter)
-                
-                update(mat, 
-                    currentChordFilter
-                     ? `${heads[colIndex].toUpperCase()} - 起始和弦低音为 <span class="note-text">${noteFromTone[currentSelectedBass]}</span>`
-                     : heads[colIndex].toUpperCase())
+    <script>
+        const app = Vue.createApp({
+            data() { return {
+                currentProgression: [],
+                currentProgressionMax: 0,
+                heads, colIndex:0,
+                currentProgressionName: '',
+                currentProgressionPoss: '',
+            }},
+            methods:{
+                GetDeriveredProgressions(prog){
+                    let r = (data_two_chords[prog.join(' ')]||[]).map(
+                        ({chords, in_years})=>({
+                            chords, 
+                            p: (in_years[colIndex]||0.0), 
+                            hist: in_years,
+                        })
+                    )
+                    this.currentProgressionMax = Math.max(...r.map(e=>Math.max(...e.hist)))
+                    // r.sort((a,b)=>b.p-a.p)
+                    return r
+                },
+                SelectHeadIndex(index){
+                    this.colIndex = colIndex = index
+                    let mat = matrixFromColumn(data_of_years, heads[this.colIndex], currentChordFilter)
+                    
+                    update(mat, 
+                        currentChordFilter
+                        ? `${headsTitle[colIndex]} - 起始和弦低音为 <span class="note-text">${scaleFromTone[currentSelectedBass]}</span>`
+                        : headsTitle[colIndex])
 
-                this.currentProgressionName = `${scaleFromTone[this.currentProgression[0]]} → ${scaleFromTone[this.currentProgression[1]]}`
-                this.currentProgressionPoss = (+currentMatrix[this.currentProgression[0]][this.currentProgression[1]]).toFixed(3)
+                    this.currentProgressionName = `${scaleFromTone[this.currentProgression[0]]} → ${scaleFromTone[this.currentProgression[1]]}`
+                    this.currentProgressionPoss = (+currentMatrix[this.currentProgression[0]][this.currentProgression[1]]).toFixed(3)
+                }
+                // GetDataFromYear(data){
+                //     return data[colIndex] || 0
+                // }
             }
-            // GetDataFromYear(data){
-            //     return data[colIndex] || 0
-            // }
-        }
-    })
-    app.component('Progression', {
-        template: '#t-progression',
-        props: ['data', 'p', 'hist', 'max', 'col'],
-        methods:{
-            GetChordBassNote,
-            GetCurrentDataHtml(cols){
-                return ReplaceBracket(cols[colIndex])
+        })
+        app.component('Progression', {
+            template: '#t-progression',
+            props: ['data', 'p', 'hist', 'max', 'col'],
+            methods:{
+                GetChordBassNote,
+                showChordTip, hideChordTip,
+                GetCurrentDataHtml(cols){
+                    return ReplaceBracket(cols[colIndex])
+                },
+                ReplaceBracket(text){
+                    return text.replace(/#/,"♯")
+                        .replace(/b/, "♭")
+                        .replace(/(\(.*?\))/,"<span>$1</span>")
+                }, 
+                isCurrentCol(index){
+                    return index==this.col
+                },
+                GetColTitle(col){
+                    return headsTitle[colIndex]
+                }
             },
-            ReplaceBracket(text){
-                return text.replace(/#/,"♯")
-                    .replace(/b/, "♭")
-                    .replace(/(\(.*?\))/,"<span>$1</span>")
-            }, 
-            isCurrentCol(index){
-                return index==this.col
-            },
-            GetColTitle(col){
-                return heads[colIndex].toUpperCase()
-            }
-        },
-    })
+        })
 
-    app.mount('#app')
+        app.mount('#app')
 
-</script>
+    </script>
 
 
     <script>
@@ -660,7 +707,7 @@
             
         }).then(c=>{
             let mat = matrixFromColumn(data_of_years, 'total')
-            update(mat, 'TOTAL')
+            update(mat, headsTitle[0])
 
         })
 
@@ -683,8 +730,7 @@
 
 
 
-
-    const showTooltip = function(event, d) {
+    const showProgDetail = function(event, d) {
         let data = app._instance.data
         data.currentProgression = [d.source.index, d.target.index]//.map(e=>`/${e}`)
         data.currentProgressionName = `${scaleFromTone[d.source.index]} → ${scaleFromTone[d.target.index]}`
@@ -738,8 +784,8 @@
     d3.select("#my_dataviz").on('click', e=>{
         if(!currentChordFilter) return
         let mat = matrixFromColumn(data_of_years, heads[colIndex])
-        update(mat, heads[colIndex])
         currentChordFilter = null
+        update(mat, headsTitle[colIndex])
     })
 
     let lastRibbonData, currentRibbonData
@@ -771,8 +817,11 @@
         )
         .join(
             enter => enter.append("path").attr("d", arcPathGenerator).attr('id',d => 'arc-'+d.index).each(d=>d.p=1)
-                .style("opacity", 0).transition().duration(500).style('opacity', 1),
-            update => update.filter(d=>!d.exit).transition().duration(500).style('opacity', 1).style('transform','scale(1)')
+                .style("opacity", 0)
+                .classed('selected-arc', (d,i)=> currentChordFilter && i==currentSelectedBass)
+                .transition().duration(500).style('opacity', 1),
+            update => update.classed('selected-arc', (d,i)=> currentChordFilter && i==currentSelectedBass)
+                .filter(d=>!d.exit).transition().duration(500).style('opacity', 1).style('transform','scale(1)')
                 .attrTween('d', (d,i)=>
                     t=>arcPathGenerator(d3.interpolate(lastArcData[i], d)(d.p=t))
                 ),
@@ -783,10 +832,13 @@
         .on('click', (e,d)=>{
             let mat = matrixFromColumn(data_of_years, heads[colIndex], currentChordFilter = (f,t)=>f==d.index)
             currentSelectedBass = d.index
-            update(mat, `${heads[colIndex].toUpperCase()} - 起始和弦低音为 <span class="note-text">${noteFromTone[d.index]}</span>`)
+            update(mat, `${headsTitle[colIndex]} - 起始和弦低音为 <span class="note-text">${scaleFromTone[d.index]}</span>`)
             e.stopPropagation()
         })
         .on("mouseover", (e,d)=>{
+            if(currentChordFilter){
+                showProgDetail(e,{source:{index: currentSelectedBass}, target:{index: d.index}})
+            }
             fade(0.05, 0.3)(e,d)
             d3.select(e.target).filter(d=>d.p==1).interrupt().
                 transition().style('opacity', 1).style('transform','scale(1.02)')
@@ -835,7 +887,7 @@
         )
         .attr('ribbon-key', d => GetRibbonKey(d))
         .style("fill", d=>`url(#st-${noteFromTone[d.source.index]})` )
-        .on("mouseover", showTooltip )
+        .on("mouseover", showProgDetail )
         // .on("mouseleave", hideTooltip )
         
         currentRibbonData = CacheChordData(res)
