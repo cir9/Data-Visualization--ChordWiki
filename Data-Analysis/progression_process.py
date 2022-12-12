@@ -3,7 +3,16 @@ from collections import defaultdict
 from typing import Callable
 import re
 
-
+key_name_map = {
+    'Cb' : 11, 'C' : 0,  'C#' : 1,
+    'Db' : 1,  'D' : 2,  'D#' : 3,
+    'Eb' : 3,  'E' : 4,  'E#' : 5,
+    'Fb' : 4,  'F' : 5,  'F#' : 6,
+    'Gb' : 6,  'G' : 7,  'G#' : 8,
+    'Ab' : 8,  'A' : 9,  'A#' : 10,
+    'Bb' : 10, 'B' : 11, 'B#' : 0,
+    'Unknown': -1
+}
 chord_name_map = {
     'bI'   : 11, 'I'   : 0,  '#I'   : 1,
     'bII'  : 1,  'II'  : 2,  '#II'  : 3,
@@ -49,6 +58,7 @@ def process_progressions(path: str, r: dict[str, list[int]]):
 
 
     conn_chords = defaultdict[str, list[float]](lambda: [0.0] * 13)
+    
 
     # data = dict[str, list[str]]()
 
@@ -56,14 +66,20 @@ def process_progressions(path: str, r: dict[str, list[int]]):
     sums_in_year = [0.0] * 13
     notes_in_year = [0] * 13
 
+    
+    key_dists = defaultdict[int, list[float]](lambda: [0.0] * 13)
+
     with open(path + '/music_db.csv', 'r', encoding='utf-8') as f:
         reader = csv.reader(f)
         music_count += 1
         for row in reader:
             title = row[1]
+            key_dist = list(map(lambda x: x.split(':'), row[6].split(';')))
             simple_chords = row[8].split(' ')
             progressions = row[9].split('|')
             # data[title] = progressions
+
+            
 
 
             if len(progressions) == 1 and len(progressions[0]) == 0:
@@ -94,7 +110,8 @@ def process_progressions(path: str, r: dict[str, list[int]]):
             sums_in_year[0] += 1
             notes_in_year[0] += chord_count
 
-
+            for key in key_dist:
+                key_dists[key_name_map[key[0]]][0] += float(key[1])
 
             is_rank_in = title in r
             if is_rank_in:
@@ -102,6 +119,9 @@ def process_progressions(path: str, r: dict[str, list[int]]):
                 for i in range(12):
                     sums_in_year[i+1] += weights[i]
                     notes_in_year[i+1] += chord_count * weights[i]
+    
+                    for key in key_dist:
+                        key_dists[key_name_map[key[0]]][i+1] += float(key[1]) * weights[i]
 
             for [progression, count] in progset.items():
                 in_year = prog[progression]
@@ -146,6 +166,8 @@ def process_progressions(path: str, r: dict[str, list[int]]):
 
     # Normalization
 
+    list_size = 20
+    two_filtered = set[str]()
     for i in range(13):
 
         mul = 100.0 / sums_in_year[i]
@@ -168,6 +190,24 @@ def process_progressions(path: str, r: dict[str, list[int]]):
         for music in three_chords.values():
             music[i] *= smul3
 
+            
+        for dist in key_dists.values():
+            dist[i] *= mul
+            
+
+        two_n_map = defaultdict[str, int](lambda: 0)
+        for k, v in {k: v for k, v in sorted(two_chords.items(), key=lambda item: item[1][i], reverse=True)}.items():
+            simp = ' '.join(map(lambda x: str(get_chord_bass(x)), k.split(' ')))
+            n = two_n_map[simp]
+            n += 1
+            if n > list_size:
+                continue
+            two_n_map[simp] = n
+            two_filtered.add(k)
+
+        
+        
+
     header = ['key', 'total', 'weighted',
               '2012', '2013', '2014', '2015', '2016', '2017', '2018', '2019', '2020', '2021', '2022']
 
@@ -184,17 +224,15 @@ def process_progressions(path: str, r: dict[str, list[int]]):
     with open(path + '/two_chords.csv', 'w', newline='', encoding='utf-8-sig') as f:
         writer = csv.writer(f)
         writer.writerow(['semi'] + header)
-        i = 0
-        for k, v in {k: v for k, v in sorted(two_chords.items(), key=lambda item: item[1][0], reverse=True)}.items():
-            writer.writerow(
-                [
-                    ' '.join(map(lambda x: str(get_chord_bass(x)), k.split(' '))),
-                    k
-                ] + v
-            )
-            i += 1
-            if i > 2000: 
-                break
+        for k, v in {k: v for k, v in sorted({key: two_chords[key] for key in two_filtered}.items(), key=lambda item: item[1][1], reverse=True)}.items():
+        #     writer.writerow([k] + v)
+        # for k in two_filtered:
+            # v = two_chords[k]
+            writer.writerow([
+                ' '.join(map(lambda x: str(get_chord_bass(x)), k.split(' '))),
+                k
+            ] + v)
+
 
 
     with open(path + '/conn_chords.csv', 'w', newline='', encoding='utf-8-sig') as f:
@@ -206,4 +244,11 @@ def process_progressions(path: str, r: dict[str, list[int]]):
     with open(path + '/three_chords.csv', 'w', newline='', encoding='utf-8-sig') as f:
         writer = csv.writer(f)
         for k, v in {k: v for k, v in sorted(three_chords.items(), key=lambda item: item[1][0], reverse=True)}.items():
+            writer.writerow([k] + v)
+
+    
+    with open(path + '/keys.csv', 'w', newline='', encoding='utf-8-sig') as f:
+        writer = csv.writer(f)
+        writer.writerow(header)
+        for k, v in {k: v for k, v in sorted(key_dists.items(), key=lambda item: item[1][0], reverse=True)}.items():
             writer.writerow([k] + v)
