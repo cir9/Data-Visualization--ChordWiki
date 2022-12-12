@@ -25,6 +25,7 @@ namespace Data_ChordWiki
         private readonly static int progressionLength = 4;
         private readonly static int minSpanLength = 4;
 
+
         public static void CalculateStatistics(string dataPath)
         {
             Dictionary<string, int> chordCounts = new();
@@ -56,7 +57,7 @@ namespace Data_ChordWiki
                         Note mostLikelyKey = chordFile.MostLikelyKey;
 
                         if (chordFile.ContainsTranspose || mostLikelyKey.IsUnknown) {
-                            Console.Write("Key Unknown\n");
+                            Console.Write("Key Unknown ...Skip\n");
                             continue;
                         }
 
@@ -64,6 +65,12 @@ namespace Data_ChordWiki
 
                         //continue;
                     };
+
+                    if (chordFile.containsBannedChord)
+                    {
+                        Console.Write($"Contains banned Chord ...Skip\n");
+                        continue;
+                    }
 
                     var chords = chordFile.chords;
 

@@ -134,6 +134,7 @@ namespace Data_ChordWiki
         public float averageScore = 0f;
         public int totalNotes = 0;
 
+        public bool containsBannedChord;
         public bool ContainsTranspose { get => keyDistribution.Count > 1; }
         public bool IsKeyUnknown { get => key.IsUnknown; }
 
@@ -147,6 +148,12 @@ namespace Data_ChordWiki
             }
         }
 
+        private readonly static Note[] bannedBassNote = new Note[]{
+            new(){name = NoteName.VII, tune = 1},
+            new(){name = NoteName.I, tune = -1},
+            new(){name = NoteName.III, tune = 1},
+            new(){name = NoteName.IV, tune = -1},
+        };
         public ChordFile(string file)
         {
             string text = File.ReadAllText(file);
@@ -258,6 +265,7 @@ namespace Data_ChordWiki
 
 
             chords.AddRange(keyCalculator.ForceFlush());
+            containsBannedChord = chords.Where(c => bannedBassNote.Contains(c.bass) || bannedBassNote.Contains(c.chordRoot)).Any();
             keyCalculator.EndCalculate();
 
             totalNotes = keyCalculator.totalNotes;

@@ -61,41 +61,18 @@
 
 
 
-
-        .tooltip{
-            /* position: absolute; */
-            /* z-index: 1070; */
-            display: block;
-            margin: 0;
-            font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol";
-            font-style: normal;
-            font-weight: 400;
-            line-height: 1.5;
-            text-align: left;
-            text-align: start;
-            text-decoration: none;
-            text-shadow: none;
-            text-transform: none;
-            letter-spacing: normal;
-            word-break: normal;
-            word-spacing: normal;
-            white-space: normal;
-            line-break: auto;
-            font-size: .875rem;
-            word-wrap: break-word;
-            opacity: 0;
-        }
-
-
         #prog-list{
-            width: 450px;
-            padding: 0 50px;
-            height: 700px;
+            width: 420px;
+            /* padding-left:   30px;
+            padding-right: 20px; */
+            height: 600px;
             overflow-y: scroll;
+            border-radius: 4px;
+            border: 1px solid rgb(30 13 62 /33%);
         }
         
         #my_dataviz{
-            height: 700px;
+            height: 600px;
         }
 
 
@@ -168,6 +145,49 @@
         #time-picker > div:hover{
             background-color: rgba(21, 7, 72, 0.3);
         }
+        
+        .histogram {
+            width: 190px;
+            height: 50px;
+            padding: 0 2px;
+        }
+
+        .histogram rect:hover{
+            fill: rgba(21, 7, 72, 0.4);
+        }
+
+        .hist-text{
+            flex-grow: 1;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            flex-direction: column;
+        }
+
+        .unit-main{
+            
+            color: rgb(72, 51, 117);
+        }
+
+        .unit-small{
+            font-size: 10px;
+            color: rgb(152, 142, 174);
+        }
+
+        .prog-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .pb-6{
+            padding-bottom: 6rem!important;
+        }
+
+
+        [v-cloak] {
+            opacity: 0;
+        }
 
     </style>
 
@@ -236,46 +256,62 @@
                         Data Visualization of Chord Progressions
                     </text>
                     <text class="lead" fill="rgb(155,187,155)" x="50%" y="390" text-anchor="middle" >
-                        和弦进行数据可视化
+                        J-pop 中和弦进行的使用趋势和数据可视化
+                    </text>
+                    <text class="lead" fill="rgb(155,155,155)" x="50%" y="640" text-anchor="middle" >
+                        Data from ja.chordwiki.org
                     </text>
                 </g>
             </svg>
-
-
-            <!-- <div class="large-title flex-grow-1">
-                <h1 class="display-5 fw-bold text-white">Chord Progression Visualization</h1>
-                <div class="col-lg-6 mx-auto">
-                <p class="fs-5 mt-4 mb-4 lead">和弦进行数据可视化</p>
-                <div class="d-grid gap-2 d-sm-flex justify-content-sm-center">
-                    <button type="button" class="btn btn-outline-info btn-lg px-4 me-sm-3 fw-bold">Custom button</button>
-                    <button type="button" class="btn btn-outline-light btn-lg px-4">Secondary</button> 
-                </div>
-                </div>
-            </div> -->
         </div>
         
 
         <div class="b-example-divider align-items-center sticky-top row m-0 w-100" id="time-picker">
             <div v-for="(column,index) in heads" :class="`col${index==colIndex?' selected':''}`"
-                 @click="SelectHeadIndex(index)">
+                 @click="SelectHeadIndex(index)" v-cloak>
                 {{column.toUpperCase() }}
             </div>
         </div>
 
-        <div id="chord-diag">
-            <div class="d-flex justify-content-center">
-                <div id="chord-title" class="py-4"></div>
+        <div class="px-4 pt-5 mt-5 text-center">
+            <h1 class="display-6 fw-bold">和弦接续图</h1>
+            <div class="col-lg-6 mx-auto">
+                <p class="lead mb-4">
+                    统计了音乐中任意两个相邻和弦连接的出现率
+                </p>
             </div>
-            <div id="my_dataviz" class="d-flex justify-content-center">
-                <div id="chord-diagram"></div>
+          </div>
 
-                <div id="prog-list" class="d-flex flex-column">
-                    <div class="tooltip">
-                        div
+        <div id="chord-diag" class="pb-6 border-bottom">
+
+            <div id="my_dataviz" class="d-flex justify-content-center">
+                <div id="chord-diagram">
+                    
+                    <div class="d-flex justify-content-center">
+                        <div id="chord-title" class="pt-4"></div>
+                    </div>
+                </div>
+                <div>
+                    <div class="prog-header py-2">
+                        <div class="note-text" v-cloak>{{ currentProgressionName }}</div>
+                        <div>
+                            <span class="unit-small" v-if="currentProgressionPoss != ''">出现率：</span>
+                            <span class="unit-main" v-cloak>
+                                {{ currentProgressionPoss }}
+                            </span>
+                            <span class="unit-small" v-if="currentProgressionPoss != ''">次/曲</span>
+                        </div>
+
                     </div>  
-                    <div class="flex-grow-1 d-block">
-                        <Progression v-for="{chords, p} in GetDeriveredProgressions(currentProgression)"
-                            :key="chords" :data="chords" :p="p" />
+                    <div id="prog-list" class="d-flex flex-column">
+
+                        <div class="flex-grow-1 d-block">
+                            <Progression v-for="{chords, p, hist} in GetDeriveredProgressions(currentProgression)"
+                                :key="chords" :data="chords" :p="p" :hist="hist" :max="currentProgressionMax"
+                                :col="colIndex"
+                                @select-column="SelectHeadIndex"
+                            />
+                        </div>
                     </div>
                 </div>
 
@@ -284,32 +320,42 @@
 
         </div>
 
+        <div class="b-example-divider"></div>
+
     </div>
 
 
     <template id="t-progression">
-        <div class="d-flex flex-row">
+        <div class="d-flex flex-row chord-line">
             <div class="chord-block tween" 
                 :style="`--this-color: var(--color-${GetChordBassNote(chord)});`" 
                 v-for="chord in data">
                 <svg class="chord-svg" >
                     <rect x="1%" y="2%" width="98%" height="82%" fill="#f6f6f6"/>
                     <rect x="1%" y="84%" width="98%" height="14%" :fill="`url(#st-${GetChordBassNote(chord)})`"/>
-
                     <foreignObject width="100%" height="100%">
-                        <div class="chord-text-fgn  ">
+                        <div class="chord-text-fgn">
                             <div class="note-text" v-html="ReplaceBracket(chord)"></div>
                         </div>
                     </foreignObject>
-                    <!-- <text text-anchor="middle" class="note-text" x="50%" y="60%">{{ chord }}</text> -->
                 </svg>
-                <!-- <div class="d-flex flex-row">
-                    <div class="note-text" v-html="ReplaceBracket(chord)">
-                    </div>
-                </div> -->
             </div>
-            <div class="flex-grow-1">
-                {{ `${p.toFixed(3)}次/首` }}
+            <div class="flex-grow-1 d-flex">
+                <svg class="histogram">
+                    <rect v-for="(v,i) in hist"
+                        :x="`${(i<2?i:i+0.3)/(hist.length+0.3)*100}%`"    :y="`${(1-v/max*0.8)*100}%`"
+                        :width="`${1/(hist.length+0.3)*95}%`"        :height="`${v/max*80}%`" 
+                        :fill="isCurrentCol(i)?'#6b5393':'#555'"
+                        @click="$emit('selectColumn', i)"
+                        :title="`${v.toFixed(3)}次/首 - ${GetColTitle(i)}`"
+                    />
+                </svg>
+                <div class="hist-text">
+                    <div class="unit-main" v-cloak>
+                        {{ p.toFixed(3) }}
+                    </div>
+                    <div class="unit-small">次/曲</div>
+                </div>
             </div>
         </div>
     </template>
@@ -483,25 +529,38 @@
 
 
 <script>
-    // import Progression from './components/progression.vue'
-
     const app = Vue.createApp({
         data() { return {
             currentProgression: [],
-            heads, colIndex,
+            currentProgressionMax: 0,
+            heads, colIndex:0,
+            currentProgressionName: '',
+            currentProgressionPoss: '',
         }},
         methods:{
             GetDeriveredProgressions(prog){
                 let r = (data_two_chords[prog.join(' ')]||[]).map(
-                    ({chords, in_years})=>({chords, p: (in_years[colIndex]||0)})
+                    ({chords, in_years})=>({
+                        chords, 
+                        p: (in_years[colIndex]||0.0), 
+                        hist: in_years,
+                    })
                 )
-                r.sort((a,b)=>b.p-a.p)
+                this.currentProgressionMax = Math.max(...r.map(e=>Math.max(...e.hist)))
+                // r.sort((a,b)=>b.p-a.p)
                 return r
             },
             SelectHeadIndex(index){
                 this.colIndex = colIndex = index
                 let mat = matrixFromColumn(data_of_years, heads[this.colIndex], currentChordFilter)
-                update(mat, heads[colIndex])
+                
+                update(mat, 
+                    currentChordFilter
+                     ? `${heads[colIndex].toUpperCase()} - 起始和弦低音为 <span class="note-text">${noteFromTone[d.index]}</span>`
+                     : heads[colIndex].toUpperCase())
+
+                this.currentProgressionName = `${scaleFromTone[this.currentProgression[0]]} → ${scaleFromTone[this.currentProgression[1]]}`
+                this.currentProgressionPoss = (+currentMatrix[this.currentProgression[0]][this.currentProgression[1]]).toFixed(3)
             }
             // GetDataFromYear(data){
             //     return data[colIndex] || 0
@@ -510,7 +569,7 @@
     })
     app.component('Progression', {
         template: '#t-progression',
-        props: ['data', 'p'],
+        props: ['data', 'p', 'hist', 'max', 'col'],
         methods:{
             GetChordBassNote,
             GetCurrentDataHtml(cols){
@@ -521,6 +580,12 @@
                     .replace(/b/, "♭")
                     .replace(/(\(.*?\))/,"<span>$1</span>")
             }, 
+            isCurrentCol(index){
+                return index==this.col
+            },
+            GetColTitle(col){
+                return heads[colIndex].toUpperCase()
+            }
         },
     })
 
@@ -568,7 +633,7 @@
             
         }).then(c=>{
             let mat = matrixFromColumn(data_of_years, 'total')
-            update(mat, 'total')
+            update(mat, 'TOTAL')
 
         })
 
@@ -590,23 +655,15 @@
 <script>
 
 
-    const tooltip = d3.select("#my_dataviz")
-        .select('.tooltip')
+
 
     const showTooltip = function(event, d) {
-        
-        app._instance.data.currentProgression = [d.source.index, d.target.index]//.map(e=>`/${e}`)
-      tooltip
-        .html(`${scaleFromTone[d.source.index]} → ${scaleFromTone[d.target.index]}<br>出现率：${(+currentMatrix[d.source.index][d.target.index]).toFixed(2)}次/首`)
-        .transition().duration(100)
-        .style("opacity", 1)
+        let data = app._instance.data
+        data.currentProgression = [d.source.index, d.target.index]//.map(e=>`/${e}`)
+        data.currentProgressionName = `${scaleFromTone[d.source.index]} → ${scaleFromTone[d.target.index]}`
+        data.currentProgressionPoss = (+currentMatrix[d.source.index][d.target.index]).toFixed(3)
     }
-    
-    var hideTooltip = function(event, d) {
-      tooltip
-        .transition()
-    }
-    
+
 
     const title = d3.select("#chord-title").text('what')
 
@@ -615,18 +672,18 @@
     const svg = d3.select("#chord-diagram")
       .append("svg")
         .attr("width", 800)
-        .attr("height", 700)
+        .attr("height", 600)
         // .attr('viewBox', '-300 -300 300 300')
       .append("g")
         .attr('alignment-baseline', 'central')
-        .attr("transform", "translate(400,350)")
+        .attr("transform", "translate(400,300)")
     
     const arcs =  svg.append("g").attr('id', 'chord-arcs')
     const ribbons = svg.append("g").attr('id', 'chord-ribbons')
     const arcTexts = svg.append('g').attr('id', 'chord-root')
 
-    const ribbonPathGenerator = d3.ribbonArrow().radius(267).headRadius(30)
-    const arcPathGenerator = d3.arc().innerRadius(270).outerRadius(300)
+    const ribbonPathGenerator = d3.ribbonArrow().radius(247).headRadius(30)
+    const arcPathGenerator = d3.arc().innerRadius(250).outerRadius(270)
 
 
 
@@ -666,7 +723,7 @@
     function update(matrix, t){
 
         currentMatrix = matrix
-        title.text(t)
+        title.html(t)
         
         lastRibbonData = currentRibbonData
         lastArcData = currentArcData
@@ -697,8 +754,8 @@
         .style('opacity', 1)
         .style("fill", d=>`url(#st-${noteFromTone[d.index]})`)
         .on('click', (e,d)=>{
-            let mat = matrixFromColumn(data_of_years, heads[colIndex], currentChordFilter = (f,t)=>f==d.index||t==d.index)
-            update(mat, heads[colIndex] + '-' + d.index)
+            let mat = matrixFromColumn(data_of_years, heads[colIndex], currentChordFilter = (f,t)=>f==d.index)
+            update(mat, `${heads[colIndex].toUpperCase()} - 起始和弦低音为 <span class="note-text">${noteFromTone[d.index]}</span>`)
             e.stopPropagation()
         })
         .on("mouseover", (e,d)=>{
@@ -724,12 +781,12 @@
                 .style("opacity", 0).transition().duration(500).style('opacity', 1),
             update => update.transition().duration(500).style('opacity',1)
                 .attrTween('transform', (d,i)=> 
-                    t=>GetArcTextTranslate(d3.interpolate(lastArcData[i], d)(t),330,320)
+                    t=>GetArcTextTranslate(d3.interpolate(lastArcData[i], d)(t), 295, 285)
                 ),
             exit => exit.transition().duration(500).style('opacity',0).remove()    
         )
         .attr('class', 'note-text')
-        .attr('transform', d=>GetArcTextTranslate(d, 330, 320))
+        .attr('transform', d=>GetArcTextTranslate(d, 295, 285))
         .attr('text-anchor', 'middle')
         .text((d,i)=>scaleFromTone[i]);
 
@@ -751,7 +808,7 @@
         .attr('ribbon-key', d => GetRibbonKey(d))
         .style("fill", d=>`url(#st-${noteFromTone[d.source.index]})` )
         .on("mouseover", showTooltip )
-        .on("mouseleave", hideTooltip )
+        // .on("mouseleave", hideTooltip )
         
         currentRibbonData = CacheChordData(res)
         currentArcData = res.groups

@@ -12,7 +12,8 @@ data/
 Data-Visualization/node_modules
 Data-ChordWiki/.vs
 Data-ChordWiki/bin
-Data-ChordWiki/obj
+Data-ChordWiki/obj/*
+Data-ChordWiki/obj/Debug
 Data-Analysis/.idea
 Data-Analysis/.vs
 Data-Analysis/__pycache__
