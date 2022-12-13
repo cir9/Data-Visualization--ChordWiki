@@ -43,6 +43,7 @@
             -o-tab-size: 4;
             tab-size: 4;      
             font-feature-settings: normal;
+            font-family: Noto Sans CJK SC;
         }
 
         .large-title {
@@ -173,7 +174,7 @@
             padding: 0 2px;
         }
 
-        .histogram .hist-bar:hover{
+        .histogram .hist-bar:hover, .hist-sub:hover + .hist-bar{
             fill: rgba(21, 7, 72, 0.4);
         }
 
@@ -211,6 +212,16 @@
 
         .bass-prog {
             text-align: left;
+            width: 140px;
+        }
+
+        .prog-year-bar{
+            font-size: 13px;
+        }
+
+        .prog-unit-bar{
+            width: 153px;
+            text-align: right;
         }
 
         [v-cloak] {
@@ -238,7 +249,19 @@
         }
 
         #kp-diag svg{
-            width: 750px;
+            width: 600px;
+        }
+
+        #bpm-diag{
+            height: 500px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .two-rows {
+            display: flex;
+            justify-content: space-around;
+            align-items: stretch;
         }
 
     </style>
@@ -342,26 +365,46 @@
             </div>
         </div>
 
-        <div class="px-4 pt-5 mt-5 text-center">
-            <h1 class="display-6 fw-bold">主调雷达图</h1>
-            <div class="col-lg-6 mx-auto">
-                <p class="lead mb-4">
-                    统计了各音乐主调的占比
-                </p>
+        <div class="px-4 pt-5 mt-5 text-center two-rows">
+            <div>
+                <h1 class="display-6 fw-bold">主调雷达图</h1>
+                <div class="col-lg-6 mx-auto">
+                    <p class="lead mb-4">
+                        统计了所有音乐中各主调的占比
+                    </p>
+                </div>
+                        
+                <div id="kp-diag" class="pb-5">
+
+                </div>
             </div>
+    
+            <div class="h-100">
+                <h1 class="display-6 fw-bold">曲速柱状图</h1>
+                <div class="col-lg-6 mx-auto">
+                    <p class="lead mb-4">
+                        统计了各音乐的bpm分布情况
+                    </p>
+                </div>
+
+                
+        
+                <div id="bpm-diag" class="py-5">
+
+                </div>
+            </div>
+
         </div>
-
-
 
         
-        <div id="kp-diag" class="pb-5">
 
-        </div>
+
 
         <div class="b-example-divider"></div>
 
+
         <div class="px-4 pt-5 mt-5 text-center">
-            <h1 class="display-6 fw-bold">和弦接续图</h1>
+            <h1 class="display-6 fw-bold">和弦连接图</h1>
             <div class="col-lg-6 mx-auto">
                 <p class="lead mb-4">
                     统计了音乐中任意两个相邻和弦连接的出现率
@@ -386,8 +429,12 @@
                             {{ currentProgressionName }}
                         </div>
                         <!-- <div class="ps-4 unit-small flex-grow-1" v-cloak>{{ `${(CalcWeightPercentage() * 100).toFixed(1)}%` }}</div> -->
+            
+                        <div class="prog-year-bar">
+                            {{ GetCurrentYearText()}}
+                        </div>
 
-                        <div>
+                        <div class="prog-unit-bar">
                             <span class="unit-small" v-if="currentProgressionPoss != ''">出现率：</span>
                             <span class="unit-main" v-cloak>
                                 {{ currentProgressionPoss }}
@@ -417,15 +464,32 @@
 
         <div class="b-example-divider"></div>
 
+                
+        <div class="px-4 pt-5 mt-5 text-center">
+            <h1 class="display-6 fw-bold">和弦进行表</h1>
+            <div class="col-lg-6 mx-auto">
+                <p class="lead mb-4">
+                    统计了各音乐使用的和弦进行
+                </p>
+            </div>
+        </div>
+
+        
+        <div id="bpm-diag" class="pb-5">
+
+        </div>
+
+        <!-- <div class="b-example-divider"></div> -->
     </div>
 
-
+    
+    <!-- @click.stop="$emit('selectChord', chord, i)" -->
     <template id="t-progression">
         <div class="d-flex flex-row chord-line">
             <div class="chord-block tween" 
                 v-for="(chord,i) in data" 
                 @mouseover="$emit('chordTip', $event, chord)" @mouseleave="hideChordTip"
-                @click.stop="$emit('selectChord', chord, i)"
+                @click.stop="PlayChord(chord)"
                 :style="`--this-color: var(--color-${GetChordBassNote(chord)});`" >
                 <svg class="chord-svg" >
                     <rect x="1%" y="2%" width="98%" height="82%" fill="#f6f6f6"/>
@@ -437,17 +501,33 @@
                     </foreignObject>
                 </svg>
             </div>
+
             <div class="flex-grow-1 d-flex">
                 <svg class="histogram">
-                    <rect v-for="(v,i) in hist" class="hist-bar"
-                        :x="`${(i<2?i:i+0.3)/(hist.length+0.3)*100}%`"    :y="`${(1-v/max*0.8)*100}%`"
-                        :width="`${1/(hist.length+0.3)*95}%`"        :height="`${v/max*80}%`" 
-                        :fill="isCurrentCol(i)?'#4a05a0':'#555'"
-                        @click.stop="$emit('selectColumn', i)"
-                        @mouseover ="watchingIndex=i"
-                        @mouseleave="watchingIndex=-1"
-                        :title="`${v.toFixed(3)}次/曲 - ${GetColTitle(i)}`"
-                    />
+                    <g  v-for="(v,i) in hist"
+                        height="100%"
+                    >
+                        <rect class="hist-sub"
+                            :x="`${(i<2?i:i+0.3)/(hist.length+0.3)*100}%`"    y="0%"
+                            :width="`${1/(hist.length+0.3)*100}%`"        height="100%" 
+                            fill="#ffffff00"
+                            @click.stop="$emit('selectColumn', i)"
+                            @mouseover ="watchingIndex=i"
+                            @mouseleave="watchingIndex=-1"
+                        />
+
+                        <rect class="hist-bar"
+                            :x="`${(i<2?i:i+0.3)/(hist.length+0.3)*100}%`"    :y="`${(1-v/max*0.8)*100}%`"
+                            :width="`${1/(hist.length+0.3)*95}%`"        :height="`${v/max*80}%`" 
+                            :fill="isCurrentCol(i)?'#4a05a0':'#555'"
+                            @click.stop="$emit('selectColumn', i)"
+                            @mouseover ="watchingIndex=i"
+                            @mouseleave="watchingIndex=-1"
+                            :title="`${v.toFixed(3)}次/曲 - ${GetColTitle(i)}`"
+                        />
+
+                    </g>
+
                     <rect 
                         :x="`${2/(hist.length+0.3)*100}%`"    :y="`${(1-hist[1]/max*0.8)*100}%`"
                         :width="`${hist.length/(hist.length+0.3)*95}%`"  height="2%" 
@@ -475,7 +555,7 @@
 
                 <foreignObject width="100%" height="100%">
                     <div class="chord-text-fgn">
-                        <div v-html="ReplaceBracket(chordToText(chordObj))"></div>
+                        <div class="note-text" v-html="ReplaceBracket(chordToText(chordObj))"></div>
                     </div>
                 </foreignObject>
             </svg>
@@ -491,7 +571,7 @@
 
 
 
-
+    <!-- definitions -->
     <script>
 
 
@@ -518,7 +598,7 @@
     </script>
 
 
-
+    <!-- definitions & largeBg -->
     <script>
 
         const noteFromTone = ['1','b2','2','b3','3','4','b5','5','b6','6','b7','7']
@@ -626,6 +706,7 @@
         })
     </script>
     
+    <!-- tooltip & tone.js -->
     <script>
 
         let chordTip = null
@@ -636,7 +717,7 @@
                 .style("top", (event.y + window.pageYOffset -120) + "px")
                 .style('display', 'block')
                 .transition().duration(100)
-                .style("opacity", 0)
+                .style("opacity", 1)
         }
 
         var hideChordTip = function(event) {
@@ -688,7 +769,29 @@
 
     </script>
 
+    <!-- play chords -->
+    <script>
+        let width = 500
 
+        range = length => [...Array(length).keys()]
+
+
+
+        function playChord({playingKeys:{bass: b, notes}}){
+            bass.releaseAll("+0")
+            glass.releaseAll("+0")
+
+            let length = notes.length
+            let now = Tone.now()
+            bass.triggerAttackRelease(b, "2m", now, 0.33)
+            notes.forEach((n, i)=>{
+                glass.triggerAttackRelease(n, "2m", now + i * 0.15 / length, i==0 ? 0.15: 0.3 * Math.pow(0.9, i))
+            })
+        }
+
+    </script>
+
+    <!-- vue -->
     <script>
         const app = Vue.createApp({
             data() { return {
@@ -734,7 +837,7 @@
                             ? `${headsTitle[colIndex]} - 起始和弦低音为 <span class="note-text">${scaleFromTone[currentSelectedBass]}</span>`
                             : headsTitle[colIndex])
 
-                    if (this.currentProgression[0]){
+                    if (this.currentProgression[0] != null){
                         
                         this.currentProgressionName = `${scaleFromTone[this.currentProgression[0]]} → ${scaleFromTone[this.currentProgression[1]]}`
                         this.currentProgressionPoss = (+currentMatrix[this.currentProgression[0]][this.currentProgression[1]]).toFixed(3)
@@ -752,10 +855,10 @@
 
                     this.SelectHeadIndex(this.colIndex, index==0?'目标':'起始')
                     isFromMode = index==0
+                },
+                GetCurrentYearText(){
+                    return heads[this.colIndex].toUpperCase()
                 }
-                // GetDataFromYear(data){
-                //     return data[colIndex] || 0
-                // }
             }
         })
         app.component('Progression', {
@@ -766,6 +869,15 @@
                 headsTrunc
             }},
             methods:{
+                PlayChord(chord){
+                    let c = parseChord(chord)
+                    let t = getChordTones(c)
+                    console.log(chord)
+                    console.log(c)
+                    console.log(t.playingKeys.bass)
+                    console.log(t.playingKeys.notes)
+                    playChord(t)
+                },
                 GetChordBassNote, 
                 hideChordTip,
                 GetCurrentDataHtml(cols){
@@ -804,37 +916,8 @@
     </script>
 
 
+    <!-- csv reading -->
     <script>
-        let width = 500
-
-        range = length => [...Array(length).keys()]
-
-
-        // d3.select('#time-picker').selectAll('div')
-        //     .data(heads).join('div')
-        //     .attr('class', 'col')
-        //     .text(d=>d.toUpperCase())
-        //     .on('click', (e,d)=>{
-        //         colIndex = (colIndex+1) % 13
-        //         let mat = matrixFromColumn(data_of_years, heads[colIndex])
-        //         update(mat, heads[colIndex])
-        //     })
-        //     .filter((d,i)=>i==0).attr('class','col selected')
-
-
-
-
-            // let now = Tone.now()
-            // synthA.triggerAttackRelease("G4", "8n", now)
-            // synthA.triggerAttackRelease("Bb4", "8n", now+0.05, 0.6)
-            // synthA.triggerAttackRelease("E5", "8n", now+0.1, 0.3)
-            // synthA.triggerAttackRelease("D6", "8n", now+0.15, 0.15)
-            // synthB.triggerAttackRelease("C3", "8n", now)
-
-            
-            // bass.releaseAll("+0")
-            // glass.releaseAll("+0")
-
         
         d3.dsv(",", "../data/conn_chords.csv", () =>{}, (d) => {
             for(let column in d){
@@ -875,9 +958,29 @@
             buildKp()
         })
 
+
+        // d3.dsv(",", "../data/bpms.csv", () =>{}, (d) => {
+        //     if( (+d.key) < 0) return 
+        //     data_keys_raw[+d.key] = {
+        //         key: +d.key,
+        //         in_years: [...heads.map(e=>+d[e])]
+        //     }
+        // }).then(c=>{
+        //     data_keys.push(...Object.values(data_keys_raw).map(({key, in_years})=>({
+        //         key,
+        //         total: in_years[0],
+        //         avg: in_years[1],
+        //         min: d3.min(in_years.slice(2,13)),
+        //         max: d3.max(in_years.slice(2,13)),
+        //     })))
+        //     console.log(data_keys)
+        //     buildKp()
+        // })
+
         
     </script>
 
+    <!-- chord diagram -->
     <script>
 
 
@@ -957,7 +1060,7 @@
 
         var res = d3.chordDirected()
             .padAngle(0.02)
-            .sortSubgroups(d3.ascending)
+            // .sortSubgroups(d3.ascending)
             .sortChords(d3.descending)
             (matrix)
         
@@ -1111,6 +1214,7 @@
     
     </script>
 
+    <!-- key distribution diagram -->
     <script>
         const kp_width = 700
         const kp_height = 700
@@ -1168,7 +1272,7 @@
                     .attr('font-size', '12')
                     .attr("startOffset", 0)
                     .attr("xlink:href", d => "#key-id-"+d)
-                    .text(d=>c_ScaleFromTone[d])
+                    .text(d => (d==0?'1='  + c_ScaleFromTone[d]: c_ScaleFromTone[d]))
                 )
             )
 
@@ -1267,7 +1371,73 @@
 
     </script>
 
+    <!-- bpm diagram -->
+    <script>
+    
+    const bpm_text_map = [
+        '<90',
+        '90~120',
+        '120~150',
+        '150~180',
+        '≥180'
+    ]
 
+    function buildBpmStack(data, ele){
+        let margin = {top: 20, right: 30, bottom: 30, left: 30}
+        let height = 500
+        let width = 800
+
+        let color = d3.scaleSequential()
+            .domain([0,5])
+            .interpolator(d3.interpolateCool)
+        
+        let x = d3.scaleBand()
+            .domain(heads.slice(2,13))
+            .rangeRound([margin.left, width - margin.right])
+
+        let y = d3.scaleLinear()
+            .domain([0, 100]).nice()
+            .range([height - margin.bottom, margin.top])
+
+        let xAxis = g => g
+            .attr("transform", `translate(0,${height - margin.bottom})`)
+            .call(d3.axisBottom(x))
+
+        let yAxis = g => g
+            .attr("transform", `translate(${margin.left},0)`)
+            .call(d3.axisLeft(y))
+
+
+        let bp_svg = d3.select(ele).append('svg')
+            .attr("viewBox", [0, 0, width, height]);
+
+        bp_svg.append("g")
+            .selectAll("g")
+            .data(data)
+            .join("g")
+            .attr("transform", (d,i) => `translate(${x(d.year)} 0)`)
+            .call(g => g.selectAll("rect")
+                .data(d => d.stack)
+                .join("rect")
+                .attr("fill", (d,i) => color(i))
+                .attr("y", (d,i) => y(d.end))
+                .attr("width", x.bandwidth() - 1)
+                .attr("height", d => y(d.start) - y(d.end)));
+
+        bp_svg.append("g")
+            .call(xAxis);
+
+        bp_svg.append("g")
+            .call(yAxis);
+    }
+            
+        buildBpmStack([{
+            year: '2016',
+            stack: [
+                {start:10,end:30},{start:30, end:60},{start:60,end:80},{start:80,end:90},{start:90,end:100}
+            ]
+        }], '#bpm-diag')
+    </script>
 
 
 </body>

@@ -98,15 +98,17 @@ namespace Data_ChordWiki
 
                         if (chord.IsProgressionChord) {
                             string simpleChordName = chord.ToStandardSymbol();
+                            string simpleChordName1 = chord.ToSimpleChord().ToStandardSymbol();
 
                             if (allSimpleChords.Count == 0 || allSimpleChords[^1] != simpleChordName) {
                                 allSimpleChords.Add(simpleChordName);
                             }
 
                             foreach (var list in newParaChords) {
-                                if (list.Count == 0 || list[^1] != simpleChordName) {
+                                
+                                if (list.Count == 0 || list[^1] != simpleChordName1) {
 
-                                    list.Add(simpleChordName);
+                                    list.Add(simpleChordName1);
                                 }
                             }
                             progressionChords.AddRange(newParaChords.Where(e => e.Count >= progressionLength));

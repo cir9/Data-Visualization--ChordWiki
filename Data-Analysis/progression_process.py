@@ -1,6 +1,7 @@
 import csv
 from collections import defaultdict
 from typing import Callable
+import math
 import re
 
 key_name_map = {
@@ -46,6 +47,14 @@ def get_chord_bass(chord: str):
 
 
 
+def discrim_bpm(bpm: float) -> int:
+    if bpm<=40 or bpm>=320: 
+        return -1
+    if bpm < 90:
+        return 0
+    if bpm>=180:
+        return 4
+    return math.floor((bpm - 60) / 30)
 
 
 def process_progressions(path: str, r: dict[str, list[int]]):
@@ -58,6 +67,8 @@ def process_progressions(path: str, r: dict[str, list[int]]):
 
 
     conn_chords = defaultdict[str, list[float]](lambda: [0.0] * 13)
+
+    bpm_disc = defaultdict[int, list[float]](lambda: [0.0] * 13)
     
 
     # data = dict[str, list[str]]()
@@ -65,6 +76,7 @@ def process_progressions(path: str, r: dict[str, list[int]]):
     music_count = 0
     sums_in_year = [0.0] * 13
     notes_in_year = [0] * 13
+    bpms_in_year = [0.0] * 13
 
     
     key_dists = defaultdict[int, list[float]](lambda: [0.0] * 13)
@@ -74,6 +86,8 @@ def process_progressions(path: str, r: dict[str, list[int]]):
         music_count += 1
         for row in reader:
             title = row[1]
+            bpm = float(row[3])
+            disc_bpm = discrim_bpm(bpm)
             key_dist = list(map(lambda x: x.split(':'), row[6].split(';')))
             simple_chords = row[8].split(' ')
             progressions = row[9].split('|')
@@ -107,6 +121,11 @@ def process_progressions(path: str, r: dict[str, list[int]]):
 
                 i += 1
 
+
+            if disc_bpm >= 0:
+                bpms_in_year[0] += 1
+                bpm_disc[disc_bpm][0] += 1
+
             sums_in_year[0] += 1
             notes_in_year[0] += chord_count
 
@@ -120,6 +139,11 @@ def process_progressions(path: str, r: dict[str, list[int]]):
                     sums_in_year[i+1] += weights[i]
                     notes_in_year[i+1] += chord_count * weights[i]
     
+                    
+                    if disc_bpm >= 0:
+                        bpms_in_year[i+1] += weights[i]
+                        bpm_disc[disc_bpm][i+1] += weights[i]
+
                     for key in key_dist:
                         key_dists[key_name_map[key[0]]][i+1] += float(key[1]) * weights[i]
 
@@ -174,6 +198,7 @@ def process_progressions(path: str, r: dict[str, list[int]]):
         smul1 = 100.0 / notes_in_year[i]
         smul2 = 100.0 / (notes_in_year[i]-1)
         smul3 = 100.0 / (notes_in_year[i]-2)
+        bmul = 100.0 / bpms_in_year[i]
 
         for music in prog.values():
             music[i] *= mul
@@ -193,7 +218,10 @@ def process_progressions(path: str, r: dict[str, list[int]]):
             
         for dist in key_dists.values():
             dist[i] *= mul
-            
+        
+        for dist in bpm_disc.values():
+            dist[i] *= bmul
+                
 
         two_n_map = defaultdict[str, int](lambda: 0)
         for k, v in {k: v for k, v in sorted(two_chords.items(), key=lambda item: item[1][i], reverse=True)}.items():
@@ -211,13 +239,19 @@ def process_progressions(path: str, r: dict[str, list[int]]):
     header = ['key', 'total', 'weighted',
               '2012', '2013', '2014', '2015', '2016', '2017', '2018', '2019', '2020', '2021', '2022']
 
+    ci = 0
     with open(path + '/progressions.csv', 'w', newline='', encoding='utf-8-sig') as f:
         writer = csv.writer(f)
+        writer.writerow(header)
         for k, v in {k: v for k, v in sorted(prog.items(), key=lambda item: item[1][0], reverse=True)}.items():
             writer.writerow([k] + v)
+            ci += 1
+            if ci > 1000:
+                break
 
     with open(path + '/first_chords.csv', 'w', newline='', encoding='utf-8-sig') as f:
         writer = csv.writer(f)
+        writer.writerow(header)
         for k, v in {k: v for k, v in sorted(first_chords.items(), key=lambda item: item[1][0], reverse=True)}.items():
             writer.writerow([k] + v)
 
@@ -251,4 +285,11 @@ def process_progressions(path: str, r: dict[str, list[int]]):
         writer = csv.writer(f)
         writer.writerow(header)
         for k, v in {k: v for k, v in sorted(key_dists.items(), key=lambda item: item[1][0], reverse=True)}.items():
+            writer.writerow([k] + v)
+
+        
+    with open(path + '/bpms.csv', 'w', newline='', encoding='utf-8-sig') as f:
+        writer = csv.writer(f)
+        writer.writerow(header)
+        for k, v in {k: v for k, v in sorted(bpm_disc.items(), key=lambda item: item[0], reverse=True)}.items():
             writer.writerow([k] + v)
