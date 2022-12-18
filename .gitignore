@@ -8,7 +8,7 @@
 
 # Build results
 
-data/
+data/pages
 Data-Visualization/node_modules
 Data-ChordWiki/.vs
 Data-ChordWiki/bin

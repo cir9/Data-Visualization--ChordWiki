@@ -1010,7 +1010,7 @@
     const ribbons = svg.append("g").attr('id', 'chord-ribbons')
     const arcTexts = svg.append('g').attr('id', 'chord-root')
 
-    const ribbonPathGenerator = d3.ribbonArrow().radius(247).headRadius(30)
+    const ribbonPathGenerator = d3.ribbonArrow().radius(247).headRadius(13).padAngle(0.01)
     const arcPathGenerator = d3.arc().innerRadius(250).outerRadius(270)
 
 
@@ -1206,8 +1206,12 @@
 
 
     const fade = (opacity, arcOp) => (event, datum) => {
-        ribbons.selectAll("path").filter(d => d.source.index != datum.index && d.target.index != datum.index && d.p>0.999 && !d.exit)
-            .transition().style("opacity", opacity);
+        if(currentChordFilter && !isFromMode)
+            ribbons.selectAll("path").filter(d => d.target.index != datum.index && d.p>0.999 && !d.exit)
+                .transition().style("opacity", opacity);
+        else
+            ribbons.selectAll("path").filter(d => d.source.index != datum.index && d.p>0.999 && !d.exit)
+                .transition().style("opacity", opacity);
     }
 
 
