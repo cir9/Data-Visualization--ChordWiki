@@ -3,268 +3,7 @@
     <meta charset="utf-8">
     <title>Chord Visualization</title>
     <link href=".\node_modules\bootstrap\dist\css\bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
-
-    <style>
-
-        .chord-info{
-            position: absolute; 
-            z-index: 1070;
-            margin: 0;
-            background-color: white;
-            word-wrap: break-word;
-            opacity: 0;
-            width: 150px;
-            height: 80px;
-            box-shadow: 0px 6px 20px 5px rgb(0 0 0 / 20%);
-            border-radius: 8px;
-        }
-
-
-        
-        :root {
-            --main-color: #4a05a0;
-
-            --color-1: #ff6060;
-            --color-b2: #ff724b;
-            --color-2: #f59f30;
-            --color-b3: #e4b52e;
-            --color-3: #d2ca34;
-            --color-4: #78f659;
-            --color-b5: #1db9d0;
-            --color-5: #5464d6;
-            --color-b6: #6b44b2;
-            --color-6: #8f3db2;
-            --color-b7: #b43cb1;
-            --color-7: #d33ea8;
-        }
-        body {
-            line-height: 1.5;
-            -webkit-text-size-adjust: 100%;
-            -o-tab-size: 4;
-            tab-size: 4;      
-            font-feature-settings: normal;
-            font-family: Noto Sans CJK SC;
-        }
-
-        .large-title {
-            padding-top:200px
-        }
-
-        #large-bg{
-            filter:blur(2px) saturate(40%);
-            
-        }
-
-        .hero {
-            height: 800px;
-            background: linear-gradient(15deg, #87bdfa57, #de72de40);
-        }
-
-        svg text{
-            user-select: none;
-        }
-
-        .trans > *{
-            transition: 500ms;
-        }
-
-        .tween {
-            transition: 500ms
-        }
-
-
-        .fade-out{
-            transform: translateY(-50px);
-        }
-
-
-
-        #prog-list{
-            width: 420px;
-            /* padding-left:   30px;
-            padding-right: 20px; */
-            height: 600px;
-            overflow-y: scroll;
-            border-radius: 4px;
-            border: 1px solid rgb(30 13 62 /33%);
-        }
-        
-        #my_dataviz{
-            height: 600px;
-        }
-
-
-        .note-text {
-            font-family: 'DejaVu Math TeX Gyre';
-            text-align: center;
-            line-height: 1rem;
-            letter-spacing: -0.05rem;
-            user-select: none;
-                /* display: flex;
-                align-items: center */
-        }
-        .note-text > span{
-            font-size: 50%;
-            letter-spacing: -0.1rem;
-        }
-
-
-        .chord-block>div, .chord-block svg{
-            width: 80px;
-            height: 50px;
-        }
-
-        .chord-text-fgn{
-            height: 100%;
-            display: flex;
-            align-content: center;
-            align-items: center;
-            flex-wrap: nowrap;
-            justify-content: center;
-            word-break: break-all;
-            text-align: center;
-        }
-
-
-        .chord-block:hover{
-            filter: drop-shadow(0 0 2em var(--this-color));
-        }
-        .b-example-divider {
-            height: 3rem;
-            background-color: rgba(0, 0, 0, .1);
-            border: solid rgba(0, 0, 0, .15);
-            border-width: 1px 0;
-            box-shadow: inset 0 0.5em 1.5em rgb(0 0 0 / 10%), inset 0 0.125em 0.5em rgb(0 0 0 / 15%);
-        }
-
-        #time-picker{
-            background-color: rgb(230,230,230);
-            padding: 0;
-            border: none;
-        }
-
-        #time-picker > div{
-            text-align: center;
-            height: 100%;
-            display: flex;
-            align-content: center;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: 200ms;
-        }
-
-
-        #time-picker > .selected{
-            background-color: rgb(112 97 141 / 60%);
-            color: white;
-            font-weight: bold;
-            border-bottom: 6px solid rgb(74 5 160 / 90%)!important;
-        }
-
-        #time-picker > div:hover{
-            color: white;
-            background-color: rgba(21, 7, 72, 0.3);
-            border-bottom: 4px solid rgba(74, 5, 160, 0.502);
-        }
-        
-        .histogram {
-            width: 190px;
-            height: 50px;
-            padding: 0 2px;
-        }
-
-        .histogram .hist-bar:hover, .hist-sub:hover + .hist-bar{
-            fill: rgba(21, 7, 72, 0.4);
-        }
-
-        .hist-text{
-            flex-grow: 1;
-            display: flex;
-            align-items: center;
-            justify-content: flex-end;
-            flex-direction: column;
-        }
-
-        .unit-main{
-            
-            color: rgb(39 40 152);
-        }
-
-        .unit-small{
-            font-size: 10px;
-            color: rgb(152, 142, 174);
-        }
-
-        .prog-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .pb-6{
-            padding-bottom: 6rem!important;
-        }
-
-        .selected-arc {
-            filter: url(#glow);
-        }
-
-        .bass-prog {
-            text-align: left;
-            width: 140px;
-        }
-
-        .prog-year-bar{
-            font-size: 13px;
-        }
-
-        .prog-unit-bar{
-            width: 153px;
-            text-align: right;
-        }
-
-        [v-cloak] {
-            opacity: 0;
-        }
-
-        .info-chord-text-fgn{
-            height: 100%;
-            display: flex;
-            align-items: flex-end;
-            flex-wrap: nowrap;
-            word-break: break-all;
-            justify-content: flex-end;
-            flex-direction: column;
-        }
-
-        .info-chord-text-fgn .note-text{
-            line-height: 1.5;
-            font-size: 48px;
-        }
-
-        #kp-diag{
-            display: flex;
-            justify-content: center;
-        }
-
-        #kp-diag svg{
-            width: 600px;
-        }
-
-        #bpm-diag{
-            height: 500px;
-            display: flex;
-            justify-content: center;
-        }
-
-        .two-rows {
-            display: flex;
-            justify-content: space-around;
-            align-items: stretch;
-        }
-
-    </style>
+    <link href=".\scripts\style.css" rel="stylesheet" crossorigin="anonymous">
 
 </head>
 
@@ -336,7 +75,7 @@
 
 
     <div id="app">
-        <chord-info :chord="currentShownChordTip"></chord-info>
+        <chord-info :chord="currentShownChordTip" :col-index="colIndex"></chord-info>
 
             
         <div class="bg-dark text-secondary text-center hero d-flex flex-wrap">
@@ -345,10 +84,10 @@
                 <g id="large-bg"></g>
                 <g>
                     <text class="display-5 fw-bold text-white" fill="white" x="50%" y="300" text-anchor="middle" >
-                        Data Visualization of Chord Progressions
+                        Data Visualization of Chord Usage
                     </text>
                     <text class="lead" fill="rgb(155,187,155)" x="50%" y="390" text-anchor="middle" >
-                        J-pop 中和弦进行的使用趋势和数据可视化
+                        J-pop 中和弦的使用趋势和数据可视化
                     </text>
                     <text class="lead" fill="rgb(155,155,155)" x="50%" y="640" text-anchor="middle" >
                         Data from ja.chordwiki.org
@@ -365,43 +104,95 @@
             </div>
         </div>
 
-        <div class="px-4 pt-5 mt-5 text-center two-rows">
+
+
+        <div class="px-4 pt-5 mt-5 text-center">
+
             <div>
-                <h1 class="display-6 fw-bold">主调雷达图</h1>
-                <div class="col-lg-6 mx-auto">
-                    <p class="lead mb-4">
-                        统计了所有音乐中各主调的占比
-                    </p>
-                </div>
-                        
-                <div id="kp-diag" class="pb-5">
 
-                </div>
+
             </div>
+
+            <div class=" two-rows">
+            
+                <div>
+                    <h1 class="display-6 fw-bold">主调雷达图</h1>
+                    <div class="col-lg-6 mx-auto">
+                        <p class="lead mb-4">
+                            统计了各主调在所有音乐中的占比
+                        </p>
+                    </div>
+                    <div>{{ GetCurrentYearTitle() }}</div>
+                            
+                    <div id="kp-diag" class="pb-5">
     
-            <div class="h-100">
-                <h1 class="display-6 fw-bold">曲速柱状图</h1>
-                <div class="col-lg-6 mx-auto">
-                    <p class="lead mb-4">
-                        统计了各音乐的bpm分布情况
-                    </p>
+                    </div>
                 </div>
-
-                
         
-                <div id="bpm-diag" class="py-5">
-
+                <div class="h-100 w-50">
+                    <h1 class="display-6 fw-bold">曲速柱状图</h1>
+                    <div class="col-lg-6 mx-auto">
+                        <p class="lead mb-4">
+                            统计了各年度热门曲目的bpm分布情况
+                        </p>
+                    </div>
+    
+                    
+            
+                    <div id="bpm-diag" class="py-5">
+    
+                    </div>
                 </div>
             </div>
+
 
         </div>
 
-        
+
+        <div class="b-example-divider"></div>
+
+
+        <div class="px-4 pt-5 mt-5 text-center pb-5">
+            <h1 class="display-6 fw-bold">和弦气泡图</h1>
+            <div class="col-lg-6 mx-auto">
+                <p class="lead mb-4">
+                    统计了音乐中常见和弦的出现率
+                </p>
+            </div>
+            <!-- <div class="lead fs-small col-lg-6 mx-auto">
+                (单位：次/曲)
+            </div> -->
+            <div id="chord-one-diag">
+                <svg height="720px">
+                    
+                </svg>
+            </div>
+        </div>        
 
 
 
         <div class="b-example-divider"></div>
 
+        <div class="px-4 pt-5 mt-5 text-center pb-5">
+            <h1 class="display-6 fw-bold">终止和弦环状图</h1>
+            <div class="col-lg-6 mx-auto">
+                <p class="lead mb-4">
+                    统计了音乐结尾最后一个和弦的使用情况
+                </p>
+            </div>
+            <!-- <div class="lead fs-small col-lg-6 mx-auto">
+                (单位：次/曲)
+            </div> -->
+            <div id="chord-final-diag">
+                <svg height="720px">
+                    
+                </svg>
+            </div>
+        </div>        
+
+
+
+        <div class="b-example-divider"></div>
 
         <div class="px-4 pt-5 mt-5 text-center">
             <h1 class="display-6 fw-bold">和弦连接图</h1>
@@ -439,7 +230,7 @@
                             <span class="unit-main" v-cloak>
                                 {{ currentProgressionPoss }}
                             </span>
-                            <span class="unit-small" v-if="currentProgressionPoss != ''">次/曲</span>
+                            <span class="unit-small" v-if="currentProgressionPoss != ''">%</span>
                         </div>
 
                     </div>  
@@ -448,7 +239,7 @@
                         <div class="flex-grow-1 d-block">
                             <Progression v-for="{chords, p, hist} in GetDeriveredProgressions(currentProgression)"
                                 :key="chords" :data="chords" :p="p" :hist="hist" :max="currentProgressionMax"
-                                :col="colIndex"
+                                :col="colIndex" :padding="1"
                                 @select-column="SelectHeadIndex"
                                 @select-chord="SelectChord"
                                 @chord-tip="chordTip"
@@ -465,7 +256,7 @@
         <div class="b-example-divider"></div>
 
                 
-        <div class="px-4 pt-5 mt-5 text-center">
+        <!-- <div class="px-4 pt-5 mt-5 text-center">
             <h1 class="display-6 fw-bold">和弦进行表</h1>
             <div class="col-lg-6 mx-auto">
                 <p class="lead mb-4">
@@ -477,7 +268,7 @@
         
         <div id="bpm-diag" class="pb-5">
 
-        </div>
+        </div> -->
 
         <!-- <div class="b-example-divider"></div> -->
     </div>
@@ -492,17 +283,19 @@
                 @click.stop="PlayChord(chord)"
                 :style="`--this-color: var(--color-${GetChordBassNote(chord)});`" >
                 <svg class="chord-svg" >
-                    <rect x="1%" y="2%" width="98%" height="82%" fill="#f6f6f6"/>
-                    <rect x="1%" y="84%" width="98%" height="14%" :fill="`url(#st-${GetChordBassNote(chord)})`"/>
+                    <g  >
+                    <rect :x="`${padding}%`" :y="`${padding*2}%`" :width="`${100-padding*2}%`" height="82%" fill="#f6f6f6"/>
+                    <rect :x="`${padding}%`" y="84%" :width="`${100-padding*2}%`" :height="`${16-padding*2}%`" :fill="`url(#st-${GetChordBassNote(chord)})`"/>
                     <foreignObject width="100%" height="100%">
                         <div class="chord-text-fgn">
                             <div class="note-text" v-html="ReplaceBracket(chord)"></div>
                         </div>
                     </foreignObject>
+                    </g>
                 </svg>
             </div>
 
-            <div class="flex-grow-1 d-flex">
+            <div class="flex-grow-1 d-flex" >
                 <svg class="histogram">
                     <g  v-for="(v,i) in hist"
                         height="100%"
@@ -523,7 +316,7 @@
                             @click.stop="$emit('selectColumn', i)"
                             @mouseover ="watchingIndex=i"
                             @mouseleave="watchingIndex=-1"
-                            :title="`${v.toFixed(3)}次/曲 - ${GetColTitle(i)}`"
+                            :title="`${v.toFixed(3)}% - ${GetColTitle(i)}`"
                         />
 
                     </g>
@@ -535,12 +328,16 @@
                     />
                 </svg>
                 <div class="hist-text">
+                    <div class="unit-small text-align-right">
+                        {{ watchingIndex==-1 ? ( padding == 0 ? '出现率' : ''): headsTrunc[watchingIndex] }}
+                    </div>
                     <div class="unit-main" v-cloak>
-                        {{ watchingIndex==-1 ? p.toFixed(3): hist[watchingIndex].toFixed(3) }}
+                        <span class="unit-main" v-cloak>
+                            {{ watchingIndex==-1 ? p.toFixed(3): hist[watchingIndex].toFixed(3) }}
+                        </span>
+                        <span class="unit-small">%</span>
                     </div>
-                    <div class="unit-small">
-                        {{ watchingIndex==-1 ? '次/曲': headsTrunc[watchingIndex] }}
-                    </div>
+
                 </div>
             </div>
         </div>
@@ -548,17 +345,30 @@
 
     <template id="t-chord-info">
         <div class="chord-info">
-            <svg width="100%" height="100%">
+
+        <Progression
+            :data="[chord]" :p="GetP(chord)" :hist="GetPs(chord)" :max="GetPMax(chord)"
+            :col="colIndex" :padding="0"
+            @select-column="SelectHeadIndex"
+        />
+
+            <!-- <svg width="100%" height="100%">
                 <rect x="0%" y="90%" width="100%" height="10%" :fill="`url(#st-${GetChordBassNote(chord)})`"/>
-                <!-- <text x="50%" y="50%" text-anchor="middle" font-size="24px" fill="black">{{ ReplaceBracket(chordToText(chordObj)) }}</text> -->
+                <text x="50%" y="50%" text-anchor="middle" font-size="24px" fill="black">{{ ReplaceBracket(chordToText(chordObj)) }}</text>
 
 
                 <foreignObject width="100%" height="100%">
-                    <div class="chord-text-fgn">
+                    <div class="">
                         <div class="note-text" v-html="ReplaceBracket(chordToText(chordObj))"></div>
                     </div>
+
+                    <Progression
+                        :data="[chord]" :p="GetP(chord)" :hist="GetPs(chord)" :max="GetPMax(chord)"
+                        :col="colIndex"
+                        @select-column="SelectHeadIndex"
+                    />
                 </foreignObject>
-            </svg>
+            </svg> -->
         </div>
     </template>
 
@@ -579,6 +389,7 @@
         const data_two_chords = {}  
         const data_keys_raw = {}      
         const data_keys = []
+        const data_one_chords = {}
         let colIndex = 0
         let playIndex = 0        
         let currentChordFilter = null
@@ -588,7 +399,7 @@
         
         const heads = ['total', 'weighted',
               '2012', '2013', '2014', '2015', '2016', '2017', '2018', '2019', '2020', '2021', '2022']
-        const headsTrunc = ['TOTAL', 'WEIGHT',
+        const headsTrunc = ['TOTAL', 'WEIGHTED',
               '2012', '2013', '2014', '2015', '2016', '2017', '2018', '2019', '2020', '2021', '2022']
 
         const headsTitle = ['总计', '热门总计 (2012-2022年)',
@@ -641,9 +452,9 @@
         const GetChordBassNote = (chord) => noteFromTone[GetChordBass(chord)]
 
         const ReplaceBracket = (text) =>
-            text.replace(/#/,"♯")
-                .replace(/b/, "♭")
-                .replace(/(\(.*?\))/,"<span>$1</span>")
+            text.replaceAll(/#/g,"♯")
+                .replaceAll(/b/g, "♭")
+                .replaceAll(/(\(.*?\)|sus[24])/g,"<span>$1</span>")
          
 
         let progression_index = 0
@@ -654,7 +465,17 @@
             ['I', 'III', 'VIm', 'II'],
         ]
 
+
+
+
         // let shown_progression = ['IV', 'V', 'IIIm', 'VIm']
+
+        // const observer = new IntersectionObserver( 
+        //     ([e]) => e.target.classList.toggle("is-pinned", e.intersectionRatio < 1),
+        //     { threshold: [1] }
+        // );
+        // observer.observe(document.querySelector("#time-picker"));
+
 
         function update_largeBg(prog){
           
@@ -712,12 +533,14 @@
         let chordTip = null
         const showChordTip = function(event, chord) {
             chordTip = chordTip || d3.select('#chord-info')
+            let t = event.y + window.pageYOffset -120
             chordTip
-                .style("left", (event.x-75) + "px")
-                .style("top", (event.y + window.pageYOffset -120) + "px")
+                .style("left", (event.x-165) + "px")
+                .style("top", (event.y -120 > 0 ? t: t + 200) + "px")
                 .style('display', 'block')
                 .transition().duration(100)
                 .style("opacity", 1)
+            app._instance.data.currentShownChordTip = chord
         }
 
         var hideChordTip = function(event) {
@@ -785,8 +608,19 @@
             let now = Tone.now()
             bass.triggerAttackRelease(b, "2m", now, 0.33)
             notes.forEach((n, i)=>{
-                glass.triggerAttackRelease(n, "2m", now + i * 0.15 / length, i==0 ? 0.15: 0.3 * Math.pow(0.9, i))
+                glass.triggerAttackRelease(n, "2m", now + i * 0.15 / length, i==0 ? 0.15: 0.3 * (i < 4 ? Math.pow(0.9, i): Math.pow(0.8, i)))
             })
+        }
+
+
+        function PlayChord(chord){
+            let c = parseChord(chord)
+            let t = getChordTones(c)
+            console.log(chord)
+            console.log(c)
+            console.log(t.playingKeys.bass)
+            console.log(t.playingKeys.notes)
+            playChord(t)
         }
 
     </script>
@@ -808,7 +642,6 @@
             methods:{
                 chordTip(e, c){
                     showChordTip(e, c)
-                    this.currentShownChordTip = c
                 },
                 GetDeriveredProgressions(prog){
                     let r = (data_two_chords[prog.join(' ')]||[]).map(
@@ -844,6 +677,7 @@
                     
                     }
                     updateKPDiag()
+                    updateHandlers.forEach(e=>e(colIndex))
                 },
                 CalcWeightPercentage(){
                     return (+this.currentProgressionPoss) / currentMatrixSum
@@ -858,26 +692,21 @@
                 },
                 GetCurrentYearText(){
                     return heads[this.colIndex].toUpperCase()
+                },
+                GetCurrentYearTitle(){
+                    return headsTitle[this.colIndex]
                 }
             }
         })
         app.component('Progression', {
             template: '#t-progression',
-            props: ['data', 'p', 'hist', 'max', 'col'],
+            props: ['data', 'p', 'hist', 'max', 'col', 'padding'],
             data(){ return{
                 watchingIndex: -1,
                 headsTrunc
             }},
             methods:{
-                PlayChord(chord){
-                    let c = parseChord(chord)
-                    let t = getChordTones(c)
-                    console.log(chord)
-                    console.log(c)
-                    console.log(t.playingKeys.bass)
-                    console.log(t.playingKeys.notes)
-                    playChord(t)
-                },
+                PlayChord,
                 GetChordBassNote, 
                 hideChordTip,
                 GetCurrentDataHtml(cols){
@@ -894,7 +723,7 @@
         })
         app.component('ChordInfo', {
             template: '#t-chord-info',
-            props: ['chord'],
+            props: ['chord', 'colIndex'],
             data(){ return{
 
             }},
@@ -904,6 +733,18 @@
                 }
             },
             methods:{
+                GetPs(chord){
+                    return Object.keys(data_one_chords).length !== 0 ? data_one_chords[chord] : [0,0]
+                },
+                GetP(chord){
+                    return Object.keys(data_one_chords).length !== 0 ? data_one_chords[chord][colIndex]: 0
+                },
+                GetPMax(chord){
+                    return Object.keys(data_one_chords).length !== 0 ? d3.max(data_one_chords[chord]): 1
+                },
+                SelectHeadIndex(index, t){
+                    app._instance.methods.SelectHeadIndex(index, t)
+                },
                 GetChordBassNote, 
                 ReplaceBracket,
                 chordToText,
@@ -942,8 +783,8 @@
 
         d3.dsv(",", "../data/keys.csv", () =>{}, (d) => {
             if( (+d.key) < 0) return 
-            data_keys_raw[+d.key] = {
-                key: +d.key,
+            data_keys_raw[circle_of_fifth[+d.key]] = {
+                key: circle_of_fifth[+d.key],
                 in_years: [...heads.map(e=>+d[e])]
             }
         }).then(c=>{
@@ -951,31 +792,12 @@
                 key,
                 total: in_years[0],
                 avg: in_years[1],
-                min: d3.min(in_years.slice(2,13)),
-                max: d3.max(in_years.slice(2,13)),
+                min: d3.min(in_years),
+                max: d3.max(in_years),
             })))
             console.log(data_keys)
             buildKp()
         })
-
-
-        // d3.dsv(",", "../data/bpms.csv", () =>{}, (d) => {
-        //     if( (+d.key) < 0) return 
-        //     data_keys_raw[+d.key] = {
-        //         key: +d.key,
-        //         in_years: [...heads.map(e=>+d[e])]
-        //     }
-        // }).then(c=>{
-        //     data_keys.push(...Object.values(data_keys_raw).map(({key, in_years})=>({
-        //         key,
-        //         total: in_years[0],
-        //         avg: in_years[1],
-        //         min: d3.min(in_years.slice(2,13)),
-        //         max: d3.max(in_years.slice(2,13)),
-        //     })))
-        //     console.log(data_keys)
-        //     buildKp()
-        // })
 
         
     </script>
@@ -1011,7 +833,7 @@
     const arcTexts = svg.append('g').attr('id', 'chord-root')
 
     const ribbonPathGenerator = d3.ribbonArrow().radius(247).headRadius(13).padAngle(0.01)
-    const arcPathGenerator = d3.arc().innerRadius(250).outerRadius(270)
+    const arcPathGenerator = d3.arc().innerRadius(250).outerRadius(270).cornerRadius(3)
 
 
 
@@ -1046,6 +868,7 @@
     let lastRibbonData, currentRibbonData
     let lastArcData, currentArcData
 
+    const updateHandlers = []
 
     let currentMatrix
     function update(matrix, t){
@@ -1086,6 +909,7 @@
         )
         .style('opacity', 1)
         .style("fill", d=>`url(#st-${noteFromTone[d.index]})`)
+        .style('cursor', 'pointer')
         .on('click', (e,d)=>{
             if(currentSelectedBass != d.index || isFromMode || !currentChordFilter){
                 let mat = matrixFromColumn(data_of_years, heads[colIndex], currentChordFilter = (f,t)=>f==d.index)
@@ -1161,6 +985,7 @@
         
         currentRibbonData = CacheChordData(res)
         currentArcData = res.groups
+
     }
 
     function matrixFromColumn(data, column, filter){
@@ -1220,6 +1045,9 @@
 
     <!-- key distribution diagram -->
     <script>
+
+        const circle_of_fifth = [0,7,2,9,4,11,6,1,8,3,10,5]
+
         const kp_width = 700
         const kp_height = 700
         const kp_margin = 10
@@ -1275,10 +1103,12 @@
                 .append("textPath")
                     .attr('font-size', '12')
                     .attr("startOffset", 0)
+                    // .attr('stroke-position',"outside")
+                    // .attr("stroke", "#fff")
+                    // .attr("stroke-width", 5)
                     .attr("xlink:href", d => "#key-id-"+d)
-                    .text(d => (d==0?'1='  + c_ScaleFromTone[d]: c_ScaleFromTone[d]))
-                )
-            )
+                    .text(d => (d==0?'1='  + c_ScaleFromTone[circle_of_fifth[d]]: c_ScaleFromTone[circle_of_fifth[d]]))
+                ))
 
         let kp_yAxis = g => g
             .attr("text-anchor", "middle")
@@ -1312,17 +1142,17 @@
         .attr("stroke-linejoin", "round")
         .attr("stroke-linecap", "round")
 
-        kp_svg.append("path")
-            .attr("fill", "lightsteelblue")
-            .attr("fill-opacity", 0.2)
-            .attr("d", area
-                .innerRadius(d => kp_y(d.min))
-                .outerRadius(d => kp_y(d.max))
-                (data_keys))
+        // kp_svg.append("path")
+        //     .attr("fill", "steelblue")
+        //     .attr("fill-opacity", 0.05)
+        //     .attr("d", area
+        //         .innerRadius(d => kp_y(d.min))
+        //         .outerRadius(d => kp_y(d.max))
+        //         (data_keys))
 
         kp_svg.append("path")
             .attr("fill", "steelblue")
-            .attr("fill-opacity", 0.2)
+            .attr("fill-opacity", 0.08)
             .attr("d", area
                 .innerRadius(d => kp_y(d.min))
                 .outerRadius(d => kp_y(d.max))
@@ -1331,7 +1161,7 @@
         kp_svg.append("path")
             .attr("fill", "none")
             .attr("stroke", "steelblue")
-            .attr("stroke-opacity", 0.7)
+            .attr("stroke-opacity", 0.4)
             .attr("stroke-width", 1.5)
             .attr("d", line
                 .radius(d => kp_y(d.avg))
@@ -1340,8 +1170,9 @@
         
     
         kp_current_line = kp_svg.append("path")
-            .attr("fill", "none")
+            .attr("fill", "var(--main-color-20)")
             .attr("stroke", "var(--main-color)")
+            .style("mix-blend-mode", "multiply")
             .attr("stroke-width", 1.5)
             .attr("d", line
                 .radius(d => kp_y(d.in_years[colIndex]))
@@ -1361,6 +1192,7 @@
     function updateKPDiag(){
         let data = Object.values(data_keys_raw)
         let rt
+        let last_colIndex = colIndex
         kp_current_line.interrupt()
             .transition().duration(500)
             .attrTween('d', ()=>
@@ -1368,7 +1200,7 @@
             ).end().then(() =>{
                 kp_last_line_data = data.map(d => kp_y(d.in_years[colIndex]))
             }).catch(e=>{
-                kp_last_line_data = data.map((d,i) => d3.interpolate(kp_last_line_data[i], kp_y(d.in_years[colIndex]))(rt))
+                kp_last_line_data = data.map((d,i) => d3.interpolate(kp_last_line_data[i], kp_y(d.in_years[last_colIndex]))(rt))
             })
         
     }
@@ -1379,23 +1211,23 @@
     <script>
     
     const bpm_text_map = [
-        '<90',
-        '90~120',
-        '120~150',
-        '150~180',
-        '≥180'
+        '慢速 (＜90bpm)',
+        '较慢 (90~120bpm)',
+        '中速 (120~150bpm)',
+        '较快 (150~180bpm)',
+        '快速 (≥180bpm)',
     ]
 
     function buildBpmStack(data, ele){
         let margin = {top: 20, right: 30, bottom: 30, left: 30}
-        let height = 500
-        let width = 800
+        let height = 300
+        let width = 500
 
         let color = d3.scaleSequential()
             .domain([0,5])
             .interpolator(d3.interpolateCool)
         
-        let x = d3.scaleBand()
+        let x = d3.scaleBand().padding(0.1)
             .domain(heads.slice(2,13))
             .rangeRound([margin.left, width - margin.right])
 
@@ -1412,6 +1244,14 @@
             .call(d3.axisLeft(y))
 
 
+        let swatches = d3.select(ele).append('div')
+            .selectAll('span')
+            .data(bpm_text_map)
+            .join('span')
+            .attr('class','data-swatch')
+            .attr('style', (d,i) => `--color: ${color(i)}`)
+            .html(d=>d)
+
         let bp_svg = d3.select(ele).append('svg')
             .attr("viewBox", [0, 0, width, height]);
 
@@ -1419,14 +1259,26 @@
             .selectAll("g")
             .data(data)
             .join("g")
+            .attr('class', 'hidden-label-group')
             .attr("transform", (d,i) => `translate(${x(d.year)} 0)`)
-            .call(g => g.selectAll("rect")
+            .call(g => g.selectAll("g")
                 .data(d => d.stack)
-                .join("rect")
-                .attr("fill", (d,i) => color(i))
-                .attr("y", (d,i) => y(d.end))
-                .attr("width", x.bandwidth() - 1)
-                .attr("height", d => y(d.start) - y(d.end)));
+                .join("g")
+                .call(g2=> g2.append('rect')
+                    .attr("fill", (d,i) => color(i))
+                    .attr("y", (d,i) => y(d.end))
+                    .attr("width", x.bandwidth() - 1)
+                    .attr("height", d => y(d.start) - y(d.end)))
+                .call(g2=> g2.append('text')
+                    .attr("y", (d,i) => y((d.start + d.end)/2))
+                    .attr("x", (d,i) => (x.bandwidth() - 1) / 2)
+                    .attr('text-anchor', 'middle')
+                    .attr('alignment-baseline', 'central')
+                    .attr('class', 'hidden-label')
+                    .attr('fill', 'white')
+                    .text(d=>`${(d.end - d.start).toFixed(0)}%`)
+                )
+            )
 
         bp_svg.append("g")
             .call(xAxis);
@@ -1435,13 +1287,201 @@
             .call(yAxis);
     }
             
-        buildBpmStack([{
-            year: '2016',
-            stack: [
-                {start:10,end:30},{start:30, end:60},{start:60,end:80},{start:80,end:90},{start:90,end:100}
-            ]
-        }], '#bpm-diag')
+    const bpms_length = bpm_text_map.length
+    const data_bpms_raw = [...heads.map(
+        e=>[...bpm_text_map.map(d=>0)]
+    )]
+    const data_bpms = [...heads.map(e=>{})]
+
+    function readBpmData(){
+        d3.dsv(",", "../data/bpms.csv", ()=>{}, (d) => {
+            let key = +d.key
+            data_bpms_raw.forEach((v,i)=>{
+                v[key] = +d[heads[i]]
+            })
+        }).then(c=>{
+            data_bpms_raw.forEach((v,i)=>{
+                let last_p = 0
+                data_bpms[i] = {
+                    year: heads[i],
+                    stack: [...v.map(e=>({
+                        start: last_p,
+                        end: (last_p=last_p+e),
+                    }))]
+                }
+            })    
+            console.log(data_bpms)
+            buildBpmStack(data_bpms.slice(2), '#bpm-diag')
+        })
+    }
+    readBpmData()
+
     </script>
 
+    <!-- chord-one diagram  -->
+    <script>
+        function ChordOneDiagram(ele){
+            const svg = d3.select(ele)
+                .attr('viewBox',"-20,-20,700,700")
+
+            const dis_g = svg.append('g')
+
+            const size = [680,680]
+            const padding = 3
+
+            function buildLayout(data, value){
+                // const D = d3.map(data, d => d);
+                // const V = d3.map(data, value);
+                // const I = d3.range(V.length).filter(i => V[i] > 0);
+
+                // // Compute layout: create a 1-deep hierarchy, and pack it.
+
+                const hir = d3.hierarchy({children: data}).sum(value)
+
+                const root = d3.pack()
+                    .size(size)
+                    .padding(padding)
+                    (d3.hierarchy({children: data})
+                    .sum(value));
+
+                return root
+            }
+
+            function buildChordCircle(parent){
+                parent
+                    .join(
+                        enter => enter
+                            .append('g')
+                            .attr('class', 'circle-group')
+                            .attr("opacity",1)
+                            .attr('style', d=>`--this-color: var(--color-${d.data.bass});`)
+                            .attr("transform", d => `translate(${d.x},${d.y}) scale(${d.r/28})`)
+                            .on('click', (e,d)=>PlayChord(d.data.name))
+                            .on('mousemove', (e,d)=>showChordTip(e,d.data.name))
+                            .on('mouseleave', (e,d)=>hideChordTip(e))
+                            .call(e=>e.append('circle')
+                                .attr('class', 'circle-back')
+                                .attr('r', 28)   
+                                .attr("fill", d=>`url(#st-${d.data.bass})`)
+                            ).call(e=>e.append('circle')
+                                .attr('r', 24)
+                                .attr('class', 'circle-cover')
+                                .attr("fill", "#f6f6f6")
+                            ).call(e=>e.append('text')
+                                .attr('class', 'circle-text note-text')
+                                .attr('text-anchor', 'middle')
+                                .attr('alignment-baseline', 'central')
+                                .attr('fill', 'black')
+                                .attr('dy', '0.1rem')
+                                .text(d=>d.data.name)
+                                .attr('transform', d=>`scale(${5/Math.max(d.data.name.length,5)})`)
+                            ).call(e=>e.append('text')
+                                .attr('class', 'circle-text note-text perc-text')
+                                .attr('text-anchor', 'middle')
+                                .attr('alignment-baseline', 'central')
+                                .attr('fill', 'black')
+                                .attr('font-size', '8px')
+                                .attr('dy', '18px')
+                                .text(d=>`${d.data.sum.toPrecision(2)}%`)
+                            ),
+                        update => update
+                            .call(e=>e.select('.perc-text').transition()
+                                .delay((d,i,a)=> (1-i/a.length) * 500 + 500)
+                                .duration((d,i,a)=> i/a.length * 500 + 500)
+                                .textTween(function(d){
+                                    let last = +this.textContent.slice(0,-1)
+                                    let cur = d.data.sum
+                                    return t=>d3.interpolateNumber(last,cur)(t).toPrecision(2)+'%'
+                                })
+                            )
+                            .interrupt()
+                            .transition()
+                            .duration((d,i,a)=> (1-i/a.length) * 300 + 200)
+                            .attr("opacity",(d,i,a)=> Math.pow(1-i/a.length, 3))
+                            .transition()
+                            .duration((d,i,a)=> i/a.length * 500 + 500)
+                            .delay((d,i,a)=> (1-i/a.length) * 500)
+                            .attr("transform", d => `translate(${d.x},${d.y}) scale(${d.r/28})`)
+                            .transition()
+                            .duration(700)
+                            .delay((d,i,a)=> Math.pow(i/a.length,2) * 1000)
+                            .attr("opacity", 1)
+                            ,
+                        exit => exit.remove(),
+                    )
+
+            }
+
+            function build(data, calc_sum){
+                let layout = buildLayout(data, calc_sum)
+
+                dis_g
+                    .selectAll('g')
+                    .data(layout.leaves(), d=>d.data.name)
+                    // .filter(d=>d.data !== undefined)
+                    .call(buildChordCircle)
+
+
+            }
+
+
+            return {build}
+
+        }
+
+        const function_order_map = [0, 1, 4, 11, 7, 3, 5, 2, 9, 6, 10, 8]
+        function getFunctionOrder(bass){
+            return function_order_map[note_name_map[bass]]
+            return (circle_of_fifth[note_name_map[bass]] + 1) % 12
+        }
+
+        const data_first_chords = {}
+        function readFirstChordsData(){
+
+            d3.dsv(",", "../data/first_chords.csv", ()=>{}, (d) => {
+                let key = d.key
+                let bass = GetChordBassNote(key)
+                for(let column in d){
+                    if (column=='key') continue
+                    (data_first_chords[column] || (data_first_chords[column] = [])).push({
+                        name: key,
+                        bass,
+                        sum: +d[column],
+                    })
+                }
+                
+            }).then(c=>{
+                Object.values(data_first_chords).forEach(e=>e.sort((a,b)=>
+                    (getFunctionOrder(a.bass) - getFunctionOrder(b.bass)) // * 5 + (b.sum - a.sum)
+                ))
+                
+                console.log(data_first_chords)
+                update_c1(colIndex)
+                updateHandlers.push(update_c1)
+            })
+
+            d3.dsv(",", "../data/one_chords.csv", ()=>{}, (d) => {
+                (data_one_chords[d.key] || (data_one_chords[d.key] = [])).push(...heads.map(e=>+d[e]))
+            }).then(c=>{
+                
+            })
+
+        }
+
+        const update_c1 = (i) => C1_diagram.build(data_first_chords[heads[i]], 
+            d=> d.sum > 1 ? Math.pow(d.sum,0.75) :Math.pow(d.sum,0.5))
+
+        readFirstChordsData()
+        const C1_diagram = ChordOneDiagram('#chord-one-diag > svg')
+
+
+    </script>
+
+    <!-- chord-final diagram -->
+    <script>
+
+
+
+    </script>
 
 </body>

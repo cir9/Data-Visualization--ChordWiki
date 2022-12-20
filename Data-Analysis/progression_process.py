@@ -191,6 +191,7 @@ def process_progressions(path: str, r: dict[str, list[int]]):
     # Normalization
 
     list_size = 20
+    one_filtered = set[str]()
     two_filtered = set[str]()
     for i in range(13):
 
@@ -233,6 +234,13 @@ def process_progressions(path: str, r: dict[str, list[int]]):
             two_n_map[simp] = n
             two_filtered.add(k)
 
+        n=0
+        for k, v in {k: v for k, v in sorted(first_chords.items(), key=lambda item: item[1][i], reverse=True)}.items():
+            one_filtered.add(k)
+            n += 1
+            if n > 100:
+                break
+
         
         
 
@@ -249,10 +257,16 @@ def process_progressions(path: str, r: dict[str, list[int]]):
             if ci > 1000:
                 break
 
-    with open(path + '/first_chords.csv', 'w', newline='', encoding='utf-8-sig') as f:
+    with open(path + '/one_chords.csv', 'w', newline='', encoding='utf-8-sig') as f:
         writer = csv.writer(f)
         writer.writerow(header)
         for k, v in {k: v for k, v in sorted(first_chords.items(), key=lambda item: item[1][0], reverse=True)}.items():
+            writer.writerow([k] + v)
+
+    with open(path + '/first_chords.csv', 'w', newline='', encoding='utf-8-sig') as f:
+        writer = csv.writer(f)
+        writer.writerow(header)
+        for k, v in {k: v for k, v in sorted({key: first_chords[key] for key in one_filtered}.items(), key=lambda item: item[1][0], reverse=True)}.items():
             writer.writerow([k] + v)
 
     with open(path + '/two_chords.csv', 'w', newline='', encoding='utf-8-sig') as f:

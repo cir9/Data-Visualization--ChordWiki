@@ -20,6 +20,16 @@ const _note_C_map = {
     'b7' : 'Bb',  '7' : 'B',  '#7' : 'B#',
 }
 
+const _note_abs_map = {
+    'Cb': -1, 'C': 0,   'C#': 1,
+    'Db': 1,  'D': 2,   'D#': 3,
+    'Eb': 3,  'E': 4,   'E#': 5,
+    'Fb': 4,  'F': 5,   'F#': 6,
+    'Gb': 6,  'G': 7,   'G#': 8,
+    'Ab': 8,  'A': 9,   'A#': 10,
+    'Bb': 10, 'B': 11,  'B#': 12,
+}
+
 const _chord_name_map = {
     'bI'   : 11, 'I'   : 0,  '#I'   : 1,
     'bII'  : 1,  'II'  : 2,  '#II'  : 3,
@@ -243,6 +253,13 @@ function chordToText({root, mod, quality, degree, fifth, sus2, sus4, alt, tensio
     return `${s_root}${s_mod}${s_degree}${s_fifth}${s_sus}${s_alt}${s_tensions}${s_omits}和弦${s_slash}`
 }
 
+function toNoteAbs(note){
+    let num = note.slice(-1)
+    let other = note.slice(0,-1)
+    return _note_abs_map[other] + num * 12
+}
+
+
 function getChordTones({root, mod, quality, degree, fifth, sus2, sus4, alt, tensions, omits, slash}){
     if (mod=='ø' && degree=='') degree='7'
 
@@ -274,25 +291,33 @@ function getChordTones({root, mod, quality, degree, fifth, sus2, sus4, alt, tens
 
     let bass = slash || root
     let notes = tones.map(t=>addInterval(root, t))
+    let fifth_note = addInterval(root, fifth || deg_t[2])
+    let third_note = addInterval(root, deg_t[1])
+    let highest_note = _tension_map[fifth] > 6 ? (deg_b[3] && deg_b[1] ? third_note: root): fifth_note
+    let sec_note = _tension_map[fifth] > 6 ? fifth_note: (deg_b[3] && deg_b[1]  ? third_note: root)
     let plays = []
 
     lastNote = ''
     let octave = 5
     for (let n of notes){//.filter(n => n!=bass)){
-        if(_note_hi_map[lastNote] > _note_hi_map[n]){
+        if(_note_hi_map[lastNote] > _note_hi_map[n] && octave <= 5){
             octave++
         }
 
         plays.push(`${_note_C_map[n]}${octave}`)
         lastNote = n
     }
+    if(plays.length < 6) plays.push(`${_note_C_map[highest_note]}6`)
+    if(plays.length < 6) plays.push(`${_note_C_map[sec_note]}6`)
+    if(plays.length < 6) plays.push(`${_note_C_map[highest_note]}5`)
+
 
     return {
         bass,
         notes,
         playingKeys: {
             bass: `${_note_C_map[bass]}4`,
-            notes: plays,
+            notes: [...new Set(plays)].sort((a,b)=>toNoteAbs(a)-toNoteAbs(b)),
         }
     }
 }
