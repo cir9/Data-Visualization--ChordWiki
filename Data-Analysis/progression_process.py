@@ -70,6 +70,7 @@ def process_progressions(path: str, r: dict[str, list[int]]):
 
     bpm_disc = defaultdict[int, list[float]](lambda: [0.0] * 13)
     
+    final_chords = defaultdict[str, list[float]](lambda: [0.0] * 13)
 
     # data = dict[str, list[str]]()
 
@@ -93,7 +94,8 @@ def process_progressions(path: str, r: dict[str, list[int]]):
             progressions = row[9].split('|')
             # data[title] = progressions
 
-            
+            final_chord = final_chords[simple_chords[-1]]
+
 
 
             if len(progressions) == 1 and len(progressions[0]) == 0:
@@ -108,7 +110,8 @@ def process_progressions(path: str, r: dict[str, list[int]]):
             for progression in progressions:
                 progset[progression] = 1
 
-
+            
+            final_chord[0] += 1
             chord_count = len(simple_chords)
             i = 0
             for chord in simple_chords:
@@ -136,6 +139,7 @@ def process_progressions(path: str, r: dict[str, list[int]]):
             if is_rank_in:
                 weights = r[title]
                 for i in range(12):
+                    final_chord[i+1] += weights[i]
                     sums_in_year[i+1] += weights[i]
                     notes_in_year[i+1] += chord_count * weights[i]
     
@@ -193,6 +197,7 @@ def process_progressions(path: str, r: dict[str, list[int]]):
     list_size = 20
     one_filtered = set[str]()
     two_filtered = set[str]()
+    final_filtered = set[str]()
     for i in range(13):
 
         mul = 100.0 / sums_in_year[i]
@@ -202,6 +207,10 @@ def process_progressions(path: str, r: dict[str, list[int]]):
         bmul = 100.0 / bpms_in_year[i]
 
         for music in prog.values():
+            music[i] *= mul
+
+            
+        for music in final_chords.values():
             music[i] *= mul
 
         for music in first_chords.values():
@@ -241,7 +250,12 @@ def process_progressions(path: str, r: dict[str, list[int]]):
             if n > 100:
                 break
 
-        
+        n=0
+        for k, v in {k: v for k, v in sorted(final_chords.items(), key=lambda item: item[1][i], reverse=True)}.items():
+            final_filtered.add(k)
+            n += 1
+            if n > 20:
+                break      
         
 
     header = ['key', 'total', 'weighted',
@@ -263,6 +277,14 @@ def process_progressions(path: str, r: dict[str, list[int]]):
         for k, v in {k: v for k, v in sorted(first_chords.items(), key=lambda item: item[1][0], reverse=True)}.items():
             writer.writerow([k] + v)
 
+
+    with open(path + '/final_chords.csv', 'w', newline='', encoding='utf-8-sig') as f:
+        writer = csv.writer(f)
+        writer.writerow(header)
+        for k, v in {k: v for k, v in sorted({key: final_chords[key] for key in final_filtered}.items(), key=lambda item: item[1][0], reverse=True)}.items():
+            writer.writerow([k] + v)
+
+
     with open(path + '/first_chords.csv', 'w', newline='', encoding='utf-8-sig') as f:
         writer = csv.writer(f)
         writer.writerow(header)
@@ -273,9 +295,6 @@ def process_progressions(path: str, r: dict[str, list[int]]):
         writer = csv.writer(f)
         writer.writerow(['semi'] + header)
         for k, v in {k: v for k, v in sorted({key: two_chords[key] for key in two_filtered}.items(), key=lambda item: item[1][1], reverse=True)}.items():
-        #     writer.writerow([k] + v)
-        # for k in two_filtered:
-            # v = two_chords[k]
             writer.writerow([
                 ' '.join(map(lambda x: str(get_chord_bass(x)), k.split(' '))),
                 k

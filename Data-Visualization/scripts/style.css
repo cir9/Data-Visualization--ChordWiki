@@ -18,10 +18,16 @@
     font-size: 10px;
 }
 
+.stroke-outer{
+    stroke-linejoin: round; 
+    paint-order: stroke;
+}
+
 :root {
     --main-color: #4a05a0;
     --main-color-20: #a586c7aa;
 
+    --color-0: #6b6b6b;
     --color-1: #ff6060;
     --color-b2: #ff724b;
     --color-2: #f59f30;
@@ -269,7 +275,7 @@ svg text{
 
 .two-rows {
     display: flex;
-    justify-content: space-around;
+    justify-content: space-evenly;
     align-items: stretch;
 }
 
@@ -314,6 +320,7 @@ svg text{
     transition: 400ms;
 }
 
+
 .circle-text{
     fill: white;
     transition: 400ms;
@@ -324,6 +331,7 @@ svg text{
     filter: drop-shadow(0 0 0.2em var(--this-color));
 }
 
+
 .circle-group:has(*:hover) > .circle-cover{
     opacity: 100%;
 }
@@ -331,3 +339,16 @@ svg text{
     fill: black;
 }
 
+.arc-middle{
+    opacity: 90%;
+    transition: 400ms;  
+}
+.arc-text{
+    fill: white;
+    transition: 400ms;
+}
+.arc-group:has(*:hover) > .arc-middle{
+    opacity: 100%;
+    /* filter: drop-shadow(0 0 0.2em var(--this-color)); */
+    filter: drop-shadow(0 0 0.2em var(--this-color));
+}

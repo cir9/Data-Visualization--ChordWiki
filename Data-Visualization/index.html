@@ -10,6 +10,9 @@
 <body>
     <svg class="position-absolute">
         <defs>
+            <pattern id="st-0"  patternUnits="userSpaceOnUse"  width="32" height="32">
+                <rect width="32" height="32" style="fill:var(--color-0)" />
+            </pattern>
             <pattern id="st-1"  patternUnits="userSpaceOnUse"  width="32" height="32">
                 <rect width="32" height="32" style="fill:var(--color-1)" />
             </pattern>
@@ -84,7 +87,7 @@
                 <g id="large-bg"></g>
                 <g>
                     <text class="display-5 fw-bold text-white" fill="white" x="50%" y="300" text-anchor="middle" >
-                        Data Visualization of Chord Usage
+                        Data Visualization of Chord Usage Statistics
                     </text>
                     <text class="lead" fill="rgb(155,187,155)" x="50%" y="390" text-anchor="middle" >
                         J-pop 中和弦的使用趋势和数据可视化
@@ -113,7 +116,7 @@
 
             </div>
 
-            <div class=" two-rows">
+            <div class="two-rows">
             
                 <div>
                     <h1 class="display-6 fw-bold">主调雷达图</h1>
@@ -151,44 +154,51 @@
 
         <div class="b-example-divider"></div>
 
-
-        <div class="px-4 pt-5 mt-5 text-center pb-5">
-            <h1 class="display-6 fw-bold">和弦气泡图</h1>
-            <div class="col-lg-6 mx-auto">
-                <p class="lead mb-4">
-                    统计了音乐中常见和弦的出现率
-                </p>
+        <div class="two-rows">
+            <div>
+                <div class="px-4 pt-5 mt-5 text-center pb-5">
+                    <h1 class="display-6 fw-bold">和弦气泡图</h1>
+                    <div class="col-lg-6 mx-auto">
+                        <p class="lead mb-4">
+                            统计了音乐中常见和弦的出现率
+                        </p>
+                    </div>
+                    <!-- <div class="lead fs-small col-lg-6 mx-auto">
+                        (单位：次/曲)
+                    </div> -->
+                    <div id="chord-one-diag">
+                        <svg height="720px">
+                            
+                        </svg>
+                    </div>
+                </div>    
             </div>
-            <!-- <div class="lead fs-small col-lg-6 mx-auto">
-                (单位：次/曲)
-            </div> -->
-            <div id="chord-one-diag">
-                <svg height="720px">
-                    
-                </svg>
+            <div>
+
+                <div class="px-4 pt-5 mt-5 text-center pb-5">
+                    <h1 class="display-6 fw-bold">终止和弦环状图</h1>
+                    <div class="col-lg-6 mx-auto">
+                        <p class="lead mb-4">
+                            统计了音乐结尾<br>最后一个和弦的使用情况
+                        </p>
+                    </div>
+                    <div>{{ GetCurrentYearTitle() }}</div>
+                    <!-- <div class="lead fs-small col-lg-6 mx-auto">
+                        (单位：次/曲)
+                    </div> -->
+                    <div id="chord-final-diag">
+                        <svg height="500px">
+                            
+                        </svg>
+                    </div>
+                </div>        
             </div>
-        </div>        
+        
+        </div>
+    
 
 
 
-        <div class="b-example-divider"></div>
-
-        <div class="px-4 pt-5 mt-5 text-center pb-5">
-            <h1 class="display-6 fw-bold">终止和弦环状图</h1>
-            <div class="col-lg-6 mx-auto">
-                <p class="lead mb-4">
-                    统计了音乐结尾最后一个和弦的使用情况
-                </p>
-            </div>
-            <!-- <div class="lead fs-small col-lg-6 mx-auto">
-                (单位：次/曲)
-            </div> -->
-            <div id="chord-final-diag">
-                <svg height="720px">
-                    
-                </svg>
-            </div>
-        </div>        
 
 
 
@@ -532,6 +542,7 @@
 
         let chordTip = null
         const showChordTip = function(event, chord) {
+            if (chord=='Other') return
             chordTip = chordTip || d3.select('#chord-info')
             let t = event.y + window.pageYOffset -120
             chordTip
@@ -615,6 +626,7 @@
 
         function PlayChord(chord){
             let c = parseChord(chord)
+            if(!c) return
             let t = getChordTones(c)
             console.log(chord)
             console.log(c)
@@ -734,13 +746,13 @@
             },
             methods:{
                 GetPs(chord){
-                    return Object.keys(data_one_chords).length !== 0 ? data_one_chords[chord] : [0,0]
+                    return chord && Object.keys(data_one_chords).length !== 0 ? data_one_chords[chord] : [0,0]
                 },
                 GetP(chord){
-                    return Object.keys(data_one_chords).length !== 0 ? data_one_chords[chord][colIndex]: 0
+                    return chord && Object.keys(data_one_chords).length !== 0 && data_one_chords[chord] ? data_one_chords[chord][colIndex]: 0
                 },
                 GetPMax(chord){
-                    return Object.keys(data_one_chords).length !== 0 ? d3.max(data_one_chords[chord]): 1
+                    return chord && Object.keys(data_one_chords).length !== 0 && data_one_chords[chord] ? d3.max(data_one_chords[chord]): 1
                 },
                 SelectHeadIndex(index, t){
                     app._instance.methods.SelectHeadIndex(index, t)
@@ -1480,7 +1492,145 @@
     <!-- chord-final diagram -->
     <script>
 
+        function ChordFinalDiagram(ele){
+            const svg = d3.select(ele)
+                .attr('viewBox',"-225,-225,450,450")
 
+            const dis_g = svg.append('g')
+            
+            const arcPie = d3.arc()
+                .innerRadius(140)
+                .outerRadius(190)
+                .padRadius(300)
+                .padAngle(0.01)
+                .cornerRadius(3)
+
+            const arcPieData = d3.pie()
+                .value(d => d.sum)
+                .sort((a,b)=>(note_name_map[a.bass] - note_name_map[b.bass]))
+
+            let _lastArcData
+
+            let _currentArcData
+
+
+            function build(data){
+                if (_currentArcData) _lastArcData = _currentArcData
+                let res = arcPieData(data)
+                // _currentArcData = d3.map(res, d=>d.data.name)
+                _currentArcData = {}
+                res.forEach(e=>{
+                    let {value, startAngle, endAngle} = e
+                    _currentArcData[e.data.name]={startAngle, endAngle}
+                })
+                dis_g.selectAll('g')
+                    .data(res, d=>d.data.name)
+                    .join(
+                        enter => enter.append('g')
+                            .attr('class', 'arc-group')
+                            .attr('opacity', 0)
+                            .attr('style', d=>`--this-color: var(--color-${d.data.bass});`)
+                            .on('click', (e,d)=>PlayChord(d.data.name))
+                            .on('mousemove', (e,d)=>showChordTip(e,d.data.name))
+                            .on('mouseleave', (e,d)=>hideChordTip(e))
+                            .call(g => g
+                                .append("path")
+                                .attr("d", arcPie)
+                                .attr('class', 'arc-middle')
+                                .attr("fill", d=>`url(#st-${d.data.bass})`)
+                            ).call(e=>e.append('text')
+                                .attr('class', 'arc-outer-text note-text')
+                                .attr('text-anchor', 'middle')
+                                .attr('alignment-baseline', 'central')
+                                .attr('transform', d=> `translate(${arcPie.centroid(d).map(v=>v*1.25).join(",")})`)
+                                .attr('fill', 'black')
+                                .attr('font-size', '10px')
+                                .text(d=>d.data.name)
+                            ).call(e=>e.append('text')
+                                .attr('class', 'arc-text note-text perc-text')
+                                .attr('text-anchor', 'middle')
+                                .attr('alignment-baseline', 'central')
+                                .attr('transform', d=> `translate(${arcPie.centroid(d).join(",")})`)
+                                .attr('fill', 'black')
+                                .attr('font-size', '8px')
+                                .text(d=>`${d.data.sum.toFixed(0)}%`)
+                            )
+                            .transition().duration(500)
+                            .attr('opacity', 1)
+                        ,
+                        update=>update
+                            .call(g=>g.select('path')
+                                .attr("d", arcPie)
+                            )
+                            .call(g=>g.select('.arc-outer-text')
+                                .attr('transform', d=> `translate(${arcPie.centroid(d).map(v=>v*1.25).join(",")})`)
+                            )
+                            .call(g=>g.select('.arc-text')
+                                .attr('transform', d=> `translate(${arcPie.centroid(d).join(",")})`)
+                                .text(d=>`${d.data.sum.toFixed(0)}%`)
+                            )
+                        ,
+                        exit=>exit.transition().duration(500).attr('opacity',0).remove()
+                    )
+
+            }
+
+            return {build}
+        }
+
+        const data_final_chords_raw = {}
+        const data_final_chords = {}
+        function readFinalChordsData(){
+
+            d3.dsv(",", "../data/final_chords.csv", ()=>{}, (d) => {
+                let key = d.key
+                let bass = GetChordBassNote(key)
+                for(let column in d){
+                    if (column=='key') continue
+                    (data_final_chords_raw[column] || (data_final_chords_raw[column] = [])).push({
+                        name: key,
+                        bass,
+                        sum: +d[column],
+                    })
+                }
+                
+            }).then(c=>{
+
+                for (let key in data_final_chords_raw){
+                    e = data_final_chords_raw[key]
+                    e.sort((a,b)=>b.sum - a.sum)
+
+                    let filtered = e.slice(0,12)
+
+                    filtered.sort((a,b)=>
+                        (note_name_map[a.bass] - note_name_map[b.bass])
+                    )
+                    let sum = 0
+                    filtered.forEach(v=>sum+=v.sum)
+                    
+                    filtered.push({
+                        name: 'Other',
+                        bass: '0',
+                        sum: 100 - sum,
+                    })
+
+                    data_final_chords[key] = filtered
+                }
+                console.log(data_final_chords)
+                update_cf(colIndex)
+                updateHandlers.push(update_cf)
+            })
+
+        }
+
+        const update_cf = (i) => CF_diagram.build(data_final_chords[heads[i]])
+
+        const CF_diagram = ChordFinalDiagram('#chord-final-diag > svg')
+        readFinalChordsData()
+        // CF_diagram.build([
+        //     { bass: 'b6', count: 12, name:'III/#5' },
+        //     { bass: '4', count: 5, name:'IVmM7' },
+        // ])
 
     </script>
 
